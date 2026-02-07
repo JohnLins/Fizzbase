@@ -954,7 +954,7 @@
         // If you have auth, set firebase_uid here
         const firebase_uid = null; // e.g. window.firebaseUid || null
 
-        const res = await fetch("http://localhost:5000/search", {
+        const res = await fetch("http://web-production-79f4.up.railway.app/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt, firebase_uid })
