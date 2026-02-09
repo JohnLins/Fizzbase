@@ -1012,7 +1012,7 @@
         row.className = "row";
         row.tabIndex = 0;
         row.setAttribute("role", "button");
-        row.setAttribute("aria-expanded", on ? "true" : "false");
+        row.setAttribute("aria-expanded", idx === 0 ? "true" : "false");
         row.title = "Click to expand";
 
         function toggle(){
