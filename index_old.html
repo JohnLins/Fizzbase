@@ -6,9 +6,14 @@
   <title>Fizzbase — San Francisco People Search</title>
   <meta name="description" content="Fizzbase is an AI search platform that indexed every person in the Bay Area and mapped how they’re connected." />
 
+
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
+
+  <!-- Optional: dark / light mode -->
   <link rel="icon" type="image/svg+xml" href="/logo2.svg.svg">
+
+
 
   <style>
     :root{
@@ -62,45 +67,26 @@
       padding:8px 2px 0;
       z-index:5;
       position:relative;
-      gap:12px;
     }
 
     .brand{ display:flex; align-items:center; gap:10px; }
     .name{ font-weight:650; letter-spacing:-0.03em; font-size:15px; }
 
-    .addBtn{
-      margin-left:auto;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:9px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.06);
-      color:rgba(255,255,255,.92);
-      font-size:13px;
-      font-weight:600;
-      letter-spacing:-0.01em;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: transform .12s ease, background .12s ease, filter .12s ease;
+    .palace{
+      width:30px; height:30px; display:block;
+      opacity:.95;
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
     }
-    .addBtn:hover{
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.10);
-      filter: brightness(1.03);
-    }
-    .addBtn svg{
-      width:14px;
-      height:14px;
-      stroke: currentColor;
-      stroke-width:2.2;
+    .palace path, .palace line{
+      stroke:rgba(255,255,255,.86);
+      stroke-width:1.8;
+      fill:none;
       stroke-linecap:round;
       stroke-linejoin:round;
-      fill:none;
     }
+    .palace .soft{ stroke:rgba(255,255,255,.55); stroke-width:1.4; }
 
-    /* Golden Gate accent */
+    /* Golden Gate accent (unchanged) */
     .gateWrap{
       position:absolute;
       inset:-90px -320px auto auto;
@@ -152,6 +138,7 @@
       will-change: margin-top;
     }
 
+    /* In results mode we pin things higher */
     body.results .hero{
       margin-top:18px;
       text-align:left;
@@ -316,17 +303,21 @@
       box-shadow: 0 20px 70px rgba(0,0,0,.40);
     }
 
-    .head{
+    .row, .head{
       display:grid;
-      grid-template-columns:
-        72px               /* avatar */
-        220px              /* name */
-        minmax(380px, 1fr) /* socials */
-        max-content        /* resume */
-        130px;             /* contact */
+    grid-template-columns:
+    72px               /* avatar */
+    180px              /* name — FIXED */
+    minmax(420px, 1fr) /* socials — gets everything */
+    max-content        /* resume */
+    120px;             /* contact */
+
+
       gap:0;
       align-items:center;
+    }
 
+    .head{
       padding:12px 14px;
       background:rgba(255,255,255,.04);
       border-bottom:1px solid var(--border2);
@@ -336,29 +327,13 @@
       text-transform:uppercase;
     }
 
-    .rowWrap{
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .rowWrap:last-child{ border-bottom:0; }
-
     .row{
-      display:grid;
-      grid-template-columns:
-        72px
-        220px
-        minmax(380px, 1fr)
-        max-content
-        130px;
-      gap:0;
-      align-items:center;
-
       padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
       transition: background .18s ease;
-      cursor:pointer;
-      user-select:none;
     }
     .row:hover{ background:rgba(255,255,255,.03); }
-    .row:focus{ outline:none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+    .row:last-child{ border-bottom:0; }
 
     .cell{ min-width:0; }
 
@@ -409,14 +384,13 @@
     }
 
     /* social chips */
-    .socials{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      align-content:center;
-      min-width:0;
-    }
-
+   .socials{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-content:center;
+  min-width:0;
+}
     .chip{
       display:inline-flex;
       align-items:center;
@@ -431,21 +405,13 @@
       color:rgba(255,255,255,.90);
       transition: transform .12s ease, filter .12s ease, background .12s ease;
       max-width:100%;
-      cursor:pointer;
     }
     .chip:hover{ transform: translateY(-1px); filter: brightness(1.02); }
     .chip .handle{
-      opacity:.92;
+      opacity:.9;
       max-width:180px;
       overflow:hidden;
       text-overflow:ellipsis;
-    }
-
-    .icon{
-      width:14px; height:14px;
-      display:inline-block;
-      opacity:.92;
-      flex:0 0 auto;
     }
 
     /* theme colors per social */
@@ -454,9 +420,13 @@
     .chip.github   { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
     .chip.scholar  { background: rgba(66,133,244,.18); border-color: rgba(66,133,244,.30); }
     .chip.site     { background: rgba(52,211,153,.14); border-color: rgba(52,211,153,.26); }
-    .chip.twitter  { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
-    .chip.youtube  { background: rgba(239,68,68,.16); border-color: rgba(239,68,68,.28); }
-    .chip.tiktok   { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
+
+    .icon{
+      width:14px; height:14px;
+      display:inline-block;
+      opacity:.92;
+      flex:0 0 auto;
+    }
 
     /* resume link */
     .resume a{
@@ -471,7 +441,6 @@
       font-size:13px;
       transition: transform .12s ease, filter .12s ease;
       max-width:100%;
-      cursor:pointer;
     }
     .resume a:hover{ transform: translateY(-1px); filter: brightness(1.02); }
     .resume span{
@@ -488,7 +457,7 @@
       display:flex;
       justify-content:flex-end;
     }
-    .contact a, .contact button{
+    .contact a{
       display:inline-flex;
       align-items:center;
       justify-content:center;
@@ -501,111 +470,8 @@
       font-size:13px;
       letter-spacing:-0.01em;
       transition: transform .12s ease, filter .12s ease;
-      cursor:pointer;
     }
-    .contact a:hover, .contact button:hover{ transform: translateY(-1px); filter:brightness(.98); }
-    .contact button{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.10);
-      color:rgba(255,255,255,.88);
-    }
-    .contact button:hover{ filter:brightness(1.05); }
-
-    /* Expand details */
-    .details{
-      display:none;
-      padding:14px 14px 16px;
-      background:rgba(255,255,255,.018);
-      border-top:1px solid rgba(255,255,255,.06);
-    }
-    .rowWrap.expanded .details{ display:block; }
-
-    .detailsGrid{
-      display:grid;
-      grid-template-columns: 1.35fr .65fr;
-      gap:14px;
-      align-items:start;
-    }
-
-    .aiCard{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:12px 12px;
-      box-shadow: 0 12px 38px rgba(0,0,0,.32);
-      overflow:hidden;
-    }
-    .aiTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-      color:rgba(255,255,255,.74);
-      font-size:12px;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-    .aiText{
-      color:rgba(255,255,255,.86);
-      font-size:14px;
-      line-height:1.5;
-      margin:0;
-      display:-webkit-box;
-      -webkit-line-clamp:3;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-    }
-    .rowWrap.expanded .aiText{
-      -webkit-line-clamp:unset;
-      overflow:visible;
-    }
-
-    .tagPanel{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .tagRow{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-    }
-
-    .bubble{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.04);
-      color:rgba(255,255,255,.86);
-      font-size:13px;
-      line-height:1;
-      max-width:100%;
-    }
-
-    .bubble .btxt{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:260px;
-    }
-
-    .bubble.skill{
-      background:rgba(255,255,255,.03);
-      border-color: rgba(255,255,255,.10);
-      color:rgba(255,255,255,.84);
-    }
-
-    .moreHint{
-      color:rgba(255,255,255,.55);
-      font-size:12px;
-      margin-top:2px;
-    }
+    .contact a:hover{ transform: translateY(-1px); filter:brightness(.98); }
 
     /* Empty states */
     .empty{
@@ -625,21 +491,20 @@
     }
     .error.show{ display:block; }
 
-    /* Responsive */
+    /* Responsive table */
     @media (max-width:980px){
-      .head, .row{
-        grid-template-columns:
-          72px
-          minmax(160px, 240px)
-          minmax(260px, 1fr)
-          max-content
-          130px;
+      .row, .head{
+          .row, .head{
+    grid-template-columns:
+      72px
+      minmax(150px, 240px)
+      minmax(280px, 1fr)
+      max-content
+      120px;
+  }
+
       }
       .resume span{ max-width:150px; }
-    }
-
-    @media (max-width:860px){
-      .detailsGrid{ grid-template-columns: 1fr; }
     }
 
     @media (max-width:760px){
@@ -672,6 +537,43 @@
     @media (prefers-reduced-motion: reduce){
       *{ transition:none !important; animation:none !important; }
     }
+
+
+
+    .addBtn{
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.92);
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform .12s ease, background .12s ease, filter .12s ease;
+}
+
+.addBtn:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.10);
+  filter: brightness(1.03);
+}
+
+.addBtn svg{
+  width:14px;
+  height:14px;
+  stroke: currentColor;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  fill:none;
+}
+
   </style>
 </head>
 
@@ -752,24 +654,25 @@
     </div>
 
     <!-- Nav -->
-    <div class="nav">
-      <a class="brand" href="#" aria-label="Fizzbase home">
-        <img src="logo2.svg" style="width: 90px; height: auto" />
-        <span class="name">Fizzbase</span>
-      </a>
+  <div class="nav">
+    <a class="brand" href="#" aria-label="Fizzbase home">
+      <img src="logo2.svg" style="width: 90px; height: auto"/>
+      <span class="name">Fizzbase</span>
+    </a>
 
-      <a class="addBtn" href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-        <span>Add yourself</span>
-      </a>
-    </div>
+    <a class="addBtn" href="https://linkedin.com">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      <span>Add yourself</span>
+    </a>
+  </div>
 
     <!-- Hero -->
     <main class="hero">
       <div class="heroTop" id="heroTop">
-        <h1 style="font-size: clamp(1.5rem, 6vw, 4rem); white-space: nowrap;">Search Engine for People in SF</h1>
+        <h1 style="  font-size: clamp(1.5rem, 6vw, 4rem);
+  white-space: nowrap;">Search Engine for People in SF</h1>
         <div class="sub">
           Fizzbase is an AI search platform that indexed every important person in the Bay Area and mapped
           how they’re connected
@@ -815,7 +718,7 @@
   </div>
 
   <script>
-    // ====== Placeholder rotation ======
+    // ====== Placeholder rotation (kept) ======
     const examples = [
       "founders connected to YC who hired product leaders from Apple",
       "investors connected to climate startups in SF",
@@ -856,11 +759,12 @@
       errorBox.textContent = "";
       errorBox.classList.remove("show");
     }
+
     function setResultsMode(on){
       document.body.classList.toggle("results", !!on);
     }
 
-    // ====== Icons ======
+    // Tiny inline SVG icons (no dependencies)
     const ICONS = {
       linkedin: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M6 9h3v10H6V9Zm1.5-4.5A1.75 1.75 0 1 1 7.5 8a1.75 1.75 0 0 1 0-3.5ZM11 9h2.9v1.4h.04c.4-.76 1.4-1.56 2.88-1.56 3.08 0 3.65 2.02 3.65 4.65V19h-3v-4.75c0-1.13-.02-2.58-1.57-2.58-1.57 0-1.81 1.23-1.81 2.5V19h-3V9Z"
@@ -881,54 +785,14 @@
       </svg>`,
       doc: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V8h4.5L14 3.5Z"/>
-      </svg>`,
-      twitter: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.8l-5.3-6.6L5 22H2l7.3-8.4L1 2h6.9l4.8 6.1L18.9 2Zm-1.2 18h1.7L7.0 3.9H5.2L17.7 20Z"/>
-      </svg>`,
-      youtube: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path fill="currentColor" d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.7 4.6 12 4.6 12 4.6s-5.7 0-7.5.5A3 3 0 0 0 2.4 7.2 31 31 0 0 0 2 12a31 31 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.8.5 7.5.5 7.5.5s5.7 0 7.5-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 22 12a31 31 0 0 0-.4-4.8ZM10 15.5v-7l6 3.5-6 3.5Z"/>
-      </svg>`,
-      tiktok: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path fill="currentColor" d="M16.6 2c.3 2.6 1.8 4.1 4.4 4.4v3.3c-1.5.1-2.9-.3-4.3-1.1v7.2c0 3.7-2.6 6.2-6.2 6.2-3.4 0-6-2.3-6.4-5.7-.5-4.1 2.7-7.2 6.6-7.2.5 0 1 0 1.4.2v3.6c-.4-.1-.8-.2-1.2-.2-1.7 0-3 1.4-2.8 3.2.1 1.4 1.3 2.5 2.7 2.6 1.6.1 3-1.1 3-2.8V2h2.8Z"/>
-      </svg>`,
-      gradcap: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path fill="currentColor" d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm0 14L4.2 12.8 3 13.45 12 18l9-4.55-1.2-.65L12 17Z"/>
       </svg>`
     };
 
     function normalizeUrl(url){
       if (!url) return "";
+      // if backend gives "johnlins" etc, try to make it workable
       if (/^https?:\/\//i.test(url)) return url;
-      return "https://" + String(url).replace(/^\/+/, "");
-    }
-
-    function stopRowToggle(e){
-      // clicking links/buttons inside row should not toggle expand
-      e.stopPropagation();
-    }
-
-    function safeText(v){
-      if (v === null || v === undefined) return "";
-      return String(v);
-    }
-
-    function parseEducationLabel(payload){
-      // Prefer educations_details if present (already looks human)
-      const simple = safeText(payload.educations_details || "").trim();
-      if (simple) return simple;
-
-      // Next: try parsing `education` JSON string
-      const raw = payload.education;
-      if (!raw) return "";
-      try{
-        const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
-        if (!Array.isArray(arr) || arr.length === 0) return "";
-        const first = arr[0] || {};
-        const title = safeText(first.title || "").trim();
-        return title;
-      } catch {
-        return "";
-      }
+      return "https://" + url.replace(/^\/+/, "");
     }
 
     function buildChip({ kind, label, href }){
@@ -938,149 +802,85 @@
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       a.innerHTML = `${ICONS[kind] || ""}<span class="handle">${label}</span>`;
-      a.addEventListener("click", stopRowToggle);
       return a;
     }
 
-    function handleFromUrl(url, domain){
-      const u = safeText(url).trim();
-      if (!u) return "";
-      try{
-        const parsed = new URL(normalizeUrl(u));
-        const host = parsed.hostname.replace(/^www\./,'');
-        if (domain && !host.includes(domain)) return host;
-        const path = parsed.pathname.replace(/\/+$/,'');
-        const bits = path.split("/").filter(Boolean);
-        return bits.length ? bits[bits.length-1] : host;
-      } catch {
-        return u;
-      }
-    }
-
-    function buildBubble({ icon, text, title }){
-      const b = document.createElement("div");
-      b.className = "bubble";
-      if (title) b.title = title;
-      b.innerHTML = `${icon || ""}<span class="btxt">${text}</span>`;
-      return b;
-    }
-
-    function buildSkillBubble(text){
-      const b = document.createElement("div");
-      b.className = "bubble skill";
-      b.textContent = text;
-      return b;
-    }
-
-    function renderRows(items){
+    function renderRows(results){
       rowsEl.innerHTML = "";
-      if (!items || items.length === 0){
+      if (!results || results.length === 0){
         emptyEl.style.display = "block";
         return;
       }
       emptyEl.style.display = "none";
 
-      items.forEach((item, idx) => {
-        const payload = (item && item.payload) ? item.payload : {};
-        const name = safeText(payload.name || (payload.first_name && payload.last_name ? `${payload.first_name} ${payload.last_name}` : "") || "Unknown").trim() || "Unknown";
-        const city = safeText(payload.city || "").trim();
-        const company = safeText(payload.current_company_name || "").trim();
-        const subtitle = [company, city].filter(Boolean).join(" • ");
-
-        const rowWrap = document.createElement("div");
-        rowWrap.className = "rowWrap";
-
-        // Main row
+      results.forEach((p, idx) => {
         const row = document.createElement("div");
         row.className = "row";
-        row.tabIndex = 0;
-        row.setAttribute("role", "button");
-        row.setAttribute("aria-expanded", "false");
-        row.title = "Click to expand";
 
-        function toggle(){
-          const on = !rowWrap.classList.contains("expanded");
-          // collapse others (optional, feels cleaner)
-          document.querySelectorAll(".rowWrap.expanded").forEach(el => {
-            if (el !== rowWrap) {
-              el.classList.remove("expanded");
-              const r = el.querySelector(".row");
-              if (r) r.setAttribute("aria-expanded", "false");
-            }
-          });
-          rowWrap.classList.toggle("expanded", on);
-          row.setAttribute("aria-expanded", on ? "true" : "false");
-        }
-
-        row.addEventListener("click", toggle);
-        row.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggle();
-          }
-        });
-
-        // round + avatar
+        // round + pfp
         const round = document.createElement("div");
         round.className = "cell round";
-
         const pfp = document.createElement("div");
         pfp.className = "pfp";
         const img = document.createElement("img");
-        img.alt = name + " profile photo";
+        img.alt = p.name || "Profile photo";
         img.loading = "lazy";
-        img.src = safeText(payload.avatar || "");
-        img.onerror = () => { img.remove(); };
+        img.src = p.pfp_link || "";
+        img.onerror = () => { img.remove(); }; // clean fallback (no broken icon)
         pfp.appendChild(img);
         round.appendChild(pfp);
 
-        // name + subtitle
+        // const num = document.createElement("span");
+        // num.textContent = String(idx + 1).padStart(2, "0");
+        // round.appendChild(num);
+
+        // name + description
         const nameCell = document.createElement("div");
         nameCell.className = "cell nameCol";
         const nm = document.createElement("div");
         nm.className = "personName";
-        nm.textContent = name;
-
+        nm.textContent = p.name || "Unknown";
         const ds = document.createElement("div");
-        ds.className = "desc";
-        ds.textContent = subtitle || "—";
 
+        // ds.className = "desc";
+        // ds.textContent = p.description || "";
         nameCell.appendChild(nm);
-        nameCell.appendChild(ds);
+        //nameCell.appendChild(ds);
 
         // socials
         const socials = document.createElement("div");
         socials.className = "cell socials";
 
-        const linkedin = safeText(payload.linkedin_url || "").trim();
-        if (linkedin){
+        // Only include if non-empty
+        const linkedinUser = (p.linkedin_username || "").trim();
+        if (linkedinUser){
           socials.appendChild(buildChip({
             kind: "linkedin",
-            label: "@" + handleFromUrl(linkedin, "linkedin.com"),
-            href: normalizeUrl(linkedin)
+            label: "@" + linkedinUser,
+            href: normalizeUrl("https://www.linkedin.com/in/" + linkedinUser.replace(/^@/,""))
           }));
         }
 
-        const instagram = safeText(payload.instagram_url || "").trim();
-        if (instagram){
+        const igUser = (p.instagram_username || "").trim();
+        if (igUser){
           socials.appendChild(buildChip({
             kind: "instagram",
-            label: "@" + handleFromUrl(instagram, "instagram.com"),
-            href: normalizeUrl(instagram)
+            label: "@" + igUser,
+            href: normalizeUrl("https://www.instagram.com/" + igUser.replace(/^@/,"") + "/")
           }));
         }
 
-        const github = safeText(payload.github_url || "").trim();
-        if (github){
-          const h = handleFromUrl(github, "github.com");
+        const gh = (p.github_url || "").trim();
+        if (gh){
+          const handle = gh.replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\/+$/,"");
           socials.appendChild(buildChip({
             kind: "github",
-            label: h ? ("@" + h.replace(/^@/,"")) : "GitHub",
-            href: normalizeUrl(github)
+            label: handle.startsWith("@") ? handle : "@" + handle,
+            href: normalizeUrl(/^https?:\/\//i.test(gh) ? gh : ("https://github.com/" + handle))
           }));
         }
 
-        const scholar = safeText(payload.google_scholar_url || "").trim();
+        const scholar = (p.google_scholar_url || "").trim();
         if (scholar){
           socials.appendChild(buildChip({
             kind: "scholar",
@@ -1089,7 +889,7 @@
           }));
         }
 
-        const site = safeText(payload.personal_site_url || "").trim();
+        const site = (p.personal_site_url || "").trim();
         if (site){
           socials.appendChild(buildChip({
             kind: "site",
@@ -1098,52 +898,16 @@
           }));
         }
 
-        const twitter = safeText(payload.twitter_url || "").trim();
-        if (twitter){
-          socials.appendChild(buildChip({
-            kind: "twitter",
-            label: "@" + handleFromUrl(twitter, "x.com").replace(/^@/,""),
-            href: normalizeUrl(twitter)
-          }));
-        }
-
-        const youtube = safeText(payload.youtube_url || "").trim();
-        if (youtube){
-          socials.appendChild(buildChip({
-            kind: "youtube",
-            label: "YouTube",
-            href: normalizeUrl(youtube)
-          }));
-        }
-
-        const tiktok = safeText(payload.tiktok_url || "").trim();
-        if (tiktok){
-          socials.appendChild(buildChip({
-            kind: "tiktok",
-            label: "TikTok",
-            href: normalizeUrl(tiktok)
-          }));
-        }
-
-        if (!socials.childNodes.length){
-          const s = document.createElement("span");
-          s.style.color = "rgba(255,255,255,.35)";
-          s.style.fontSize = "13px";
-          s.textContent = "—";
-          socials.appendChild(s);
-        }
-
         // resume
         const resume = document.createElement("div");
         resume.className = "cell resume";
-        const resumeUrl = safeText(payload.resume_url || "").trim();
+        const resumeUrl = (p.resume_url || "").trim();
         if (resumeUrl){
           const a = document.createElement("a");
           a.href = normalizeUrl(resumeUrl);
           a.target = "_blank";
           a.rel = "noopener noreferrer";
           a.innerHTML = `${ICONS.doc}<span>Resume</span>`;
-          a.addEventListener("click", stopRowToggle);
           resume.appendChild(a);
         } else {
           resume.style.color = "rgba(255,255,255,.35)";
@@ -1154,32 +918,14 @@
         // contact
         const contact = document.createElement("div");
         contact.className = "cell contact";
-
-        // New API sometimes gives boolean flags `contact_url: true`, `email: true`
-        const contactUrl = payload.contact_url;
-        const email = payload.email;
-
-        const contactUrlString = (typeof contactUrl === "string") ? contactUrl.trim() : "";
-        const canContact = !!contactUrlString || contactUrl === true || email === true;
-
-        if (contactUrlString){
+        const contactUrl = (p.contact_url || "").trim();
+        if (contactUrl){
           const a = document.createElement("a");
-          a.href = normalizeUrl(contactUrlString);
+          a.href = normalizeUrl(contactUrl);
           a.target = "_blank";
           a.rel = "noopener noreferrer";
           a.textContent = "Contact";
-          a.addEventListener("click", stopRowToggle);
           contact.appendChild(a);
-        } else if (canContact){
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.textContent = "Request";
-          btn.title = "Contact is available, but no direct link was provided by the API.";
-          btn.addEventListener("click", (e) => {
-            stopRowToggle(e);
-            alert("Contact is available for this profile, but the API did not provide a direct contact link.");
-          });
-          contact.appendChild(btn);
         } else {
           const s = document.createElement("span");
           s.style.color = "rgba(255,255,255,.35)";
@@ -1194,119 +940,19 @@
         row.appendChild(resume);
         row.appendChild(contact);
 
-        // Details area
-        const details = document.createElement("div");
-        details.className = "details";
-
-        const detailsGrid = document.createElement("div");
-        detailsGrid.className = "detailsGrid";
-
-        // AI short description card
-        const aiCard = document.createElement("div");
-        aiCard.className = "aiCard";
-
-        const aiTitle = document.createElement("div");
-        aiTitle.className = "aiTitle";
-        aiTitle.innerHTML = `<span>AI Summary</span><span style="opacity:.6">Click row to expand</span>`;
-
-        const aiText = document.createElement("p");
-        aiText.className = "aiText";
-        aiText.textContent = safeText(payload.ai_short_description || "").trim() || "—";
-
-        aiCard.appendChild(aiTitle);
-        aiCard.appendChild(aiText);
-
-        // Tag panel: education + skills
-        const tagPanel = document.createElement("div");
-        tagPanel.className = "tagPanel";
-
-        const eduLabel = parseEducationLabel(payload);
-        const eduRow = document.createElement("div");
-        eduRow.className = "tagRow";
-        if (eduLabel){
-          eduRow.appendChild(buildBubble({
-            icon: ICONS.gradcap,
-            text: eduLabel,
-            title: "Education"
-          }));
-        } else {
-          eduRow.appendChild(buildBubble({
-            icon: ICONS.gradcap,
-            text: "Education unknown",
-            title: "Education"
-          }));
-          eduRow.firstChild.style.opacity = ".7";
-        }
-
-        const skillsRow = document.createElement("div");
-        skillsRow.className = "tagRow";
-
-        const skills = Array.isArray(payload.skills) ? payload.skills.filter(Boolean).map(s => String(s)) : [];
-        const previewCount = 8;
-
-        const previewSkills = skills.slice(0, previewCount);
-        previewSkills.forEach(sk => skillsRow.appendChild(buildSkillBubble(sk)));
-
-        const moreHint = document.createElement("div");
-        moreHint.className = "moreHint";
-
-        if (skills.length > previewCount){
-          moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
-        } else if (skills.length === 0){
-          moreHint.textContent = "No skills listed.";
-          moreHint.style.opacity = ".75";
-        } else {
-          moreHint.textContent = "Expand for full details.";
-          moreHint.style.opacity = ".75";
-        }
-
-        // When expanded, swap skill list to full
-        const fullSkillsRow = document.createElement("div");
-        fullSkillsRow.className = "tagRow";
-        fullSkillsRow.style.display = "none";
-        skills.forEach(sk => fullSkillsRow.appendChild(buildSkillBubble(sk)));
-
-        // Observe expanded class toggle (cheap + simple)
-        const mo = new MutationObserver(() => {
-          const expanded = rowWrap.classList.contains("expanded");
-          if (expanded){
-            skillsRow.style.display = "none";
-            fullSkillsRow.style.display = "flex";
-            if (skills.length > previewCount) moreHint.textContent = `${skills.length} skills`;
-          } else {
-            skillsRow.style.display = "flex";
-            fullSkillsRow.style.display = "none";
-            if (skills.length > previewCount) moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
-            else if (skills.length === 0) moreHint.textContent = "No skills listed.";
-            else moreHint.textContent = "Expand for full details.";
-          }
-        });
-        mo.observe(rowWrap, { attributes:true, attributeFilter:["class"] });
-
-        tagPanel.appendChild(eduRow);
-        tagPanel.appendChild(skillsRow);
-        tagPanel.appendChild(fullSkillsRow);
-        tagPanel.appendChild(moreHint);
-
-        detailsGrid.appendChild(aiCard);
-        detailsGrid.appendChild(tagPanel);
-
-        details.appendChild(detailsGrid);
-
-        rowWrap.appendChild(row);
-        rowWrap.appendChild(details);
-        rowsEl.appendChild(rowWrap);
+        rowsEl.appendChild(row);
       });
     }
 
-    // ====== Search behavior (UPDATED FOR NEW API FORMAT) ======
+    // ====== Search behavior ======
     async function runSearch(prompt){
       clearError();
       goBtn.disabled = true;
       goBtn.textContent = "Searching…";
 
       try{
-        const firebase_uid = null; // if you have auth later
+        // If you have auth, set firebase_uid here
+        const firebase_uid = null; // e.g. window.firebaseUid || null
 
         const res = await fetch("https://web-production-79f4.up.railway.app/search", {
           method: "POST",
@@ -1317,23 +963,25 @@
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok){
+          // Your backend sends {error, message}
           const code = data.error || "ERROR";
           const msg = data.message || "Search failed.";
-          showError(msg);
-          setResultsMode(true);
+          if (code === "FREE_LIMIT_REACHED" || code === "AUTH_REQUIRED"){
+            showError(msg);
+          } else {
+            showError(msg);
+          }
+          setResultsMode(true); // still collapse into results view (feels intentional)
           renderRows([]);
           resultCountEl.textContent = "0 results";
           return;
         }
 
-        // New response shape:
-        // { count: number, prompt: string, results: [{id, payload, score}, ...] }
-        const results = Array.isArray(data.results) ? data.results : [];
-        const count = (typeof data.count === "number") ? data.count : results.length;
-
+        const results = data.results || [];
         setResultsMode(true);
 
-        resultCountEl.textContent = `${count} results`;
+        // update pills
+        resultCountEl.textContent = `${results.length} results`;
         authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
 
         renderRows(results);
@@ -1342,7 +990,7 @@
         setResultsMode(true);
         renderRows([]);
         resultCountEl.textContent = "0 results";
-        showError("Network error. Check your backend URL / CORS.");
+        showError("Network error. Is your backend running on localhost:5000?");
       } finally {
         goBtn.disabled = false;
         goBtn.textContent = "Search";
@@ -1358,7 +1006,8 @@
       runSearch(q);
     });
 
-    // Support /?q=...
+    // Optional: Entering results mode when user hits /search?q=...
+    // If you want to support query params without a separate page:
     const params = new URLSearchParams(location.search);
     const qParam = params.get("q");
     if (qParam){
