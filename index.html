@@ -192,7 +192,7 @@
       margin-top:4px;
       color:var(--muted);
       font-size:16px;
-      max-width:62ch;
+      max-width:65ch;
     }
 
     /* Search */
@@ -778,15 +778,20 @@
       <div class="heroTop" id="heroTop">
         <h1 style="font-size: clamp(1.5rem, 6vw, 4rem); white-space: nowrap;">Search Engine for People in SF</h1>
         <div class="sub">
-          Fizzbase is an AI search platform that indexed every important person in the Bay Area and mapped
-          how they’re connected
+          Fizzbase is an AI search platform that indexed every important person in the Bay Area
         </div>
       </div>
 
       <form class="search" id="searchForm" autocomplete="off">
-        <div class="spark" aria-hidden="true">⌕</div>
+
         <input id="q" type="text" spellcheck="false" aria-label="Search Fizzbase" />
-        <button class="go" id="goBtn" type="submit">Search</button>
+        <button class="go" id="goBtn" type="submit"><!-- Thicker search (magnifying glass) icon SVG -->
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16.5 16.5 21 21"
+        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></button>
       </form>
 
       <div class="error" id="errorBox"></div>
@@ -997,12 +1002,17 @@
         const rowWrap = document.createElement("div");
         rowWrap.className = "rowWrap";
 
+          // If first item, expand it by default
+        if (idx === 0) {
+          rowWrap.classList.add("expanded");
+        }
+
         // Main row
         const row = document.createElement("div");
         row.className = "row";
         row.tabIndex = 0;
         row.setAttribute("role", "button");
-        row.setAttribute("aria-expanded", "false");
+        row.setAttribute("aria-expanded", on ? "true" : "false");
         row.title = "Click to expand";
 
         function toggle(){
@@ -1388,20 +1398,7 @@
 
 
 
-      window.addEventListener("load", () => {
-    // Select the first rowWrap
-    const firstRow = document.querySelector("#rows .rowWrap");
-    if (firstRow) {
-      // Add the "expanded" class to show the details
-      firstRow.classList.add("expanded");
 
-      // Optionally, focus it
-      firstRow.querySelector(".row")?.focus();
-
-      // If you have any click handler that toggles expansion, you can trigger it
-      // firstRow.querySelector(".row")?.click();
-    }
-  });
   </script>
 </body>
 </html>
