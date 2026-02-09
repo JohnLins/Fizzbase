@@ -601,6 +601,13 @@
       color:rgba(255,255,255,.84);
     }
 
+ /*   .bubble.education {
+      background: rgba(52,211,153,.14);
+      border-color: rgba(52,211,153,.26);
+      color: rgba(0,0,0,.9);
+      font-weight:600;
+    }*/
+
     .moreHint{
       color:rgba(255,255,255,.55);
       font-size:12px;
@@ -1107,7 +1114,20 @@
           }));
         }
 
-        const youtube = safeText(payload.youtube_url || "").trim();
+        function normalizeYouTubeHandle(url) {
+            const match = url.match(/^https?:\/\/(www\.)?youtube\.com\/([^/?#]+)/i);
+            if (!match) return url;
+
+            const username = match[2];
+
+            // already a handle
+            if (username.startsWith("@")) return url;
+
+            return `https://www.youtube.com/@${username}`;
+          }
+
+
+        const youtube = safeText(normalizeYouTubeHandle(payload.youtube_url) || "").trim();
         if (youtube){
           socials.appendChild(buildChip({
             kind: "youtube",
@@ -1207,7 +1227,7 @@
 
         const aiTitle = document.createElement("div");
         aiTitle.className = "aiTitle";
-        aiTitle.innerHTML = `<span>AI Summary</span><span style="opacity:.6">Click row to expand</span>`;
+        aiTitle.innerHTML = `<span>AI Summary</span>`;
 
         const aiText = document.createElement("p");
         aiText.className = "aiText";
@@ -1230,12 +1250,12 @@
             title: "Education"
           }));
         } else {
-          eduRow.appendChild(buildBubble({
-            icon: ICONS.gradcap,
-            text: "Education unknown",
-            title: "Education"
-          }));
-          eduRow.firstChild.style.opacity = ".7";
+          // eduRow.appendChild(buildBubble({
+          //   icon: ICONS.gradcap,
+          //   text: "Education unknown",
+          //   title: "Education"
+          // }));
+          // eduRow.firstChild.style.opacity = ".7";
         }
 
         const skillsRow = document.createElement("div");
@@ -1365,6 +1385,23 @@
       input.value = qParam;
       runSearch(qParam);
     }
+
+
+
+      window.addEventListener("load", () => {
+    // Select the first rowWrap
+    const firstRow = document.querySelector("#rows .rowWrap");
+    if (firstRow) {
+      // Add the "expanded" class to show the details
+      firstRow.classList.add("expanded");
+
+      // Optionally, focus it
+      firstRow.querySelector(".row")?.focus();
+
+      // If you have any click handler that toggles expansion, you can trigger it
+      // firstRow.querySelector(".row")?.click();
+    }
+  });
   </script>
 </body>
 </html>
