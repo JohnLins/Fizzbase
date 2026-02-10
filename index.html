@@ -1012,7 +1012,7 @@
         row.className = "row";
         row.tabIndex = 0;
         row.setAttribute("role", "button");
-        row.setAttribute("aria-expanded", idx === 0 ? "true" : "false");
+        //row.setAttribute("aria-expanded", idx === 0 ? "true" : "false");
         row.title = "Click to expand";
 
         function toggle(){
@@ -1375,7 +1375,13 @@
         showError("Network error. Check your backend URL / CORS.");
       } finally {
         goBtn.disabled = false;
-        goBtn.textContent = "Search";
+        goBtn.innerHTML = `
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16.5 16.5 21 21"
+        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
       }
     }
 
