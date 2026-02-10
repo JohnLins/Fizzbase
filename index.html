@@ -601,12 +601,13 @@
       color:rgba(255,255,255,.84);
     }
 
- /*   .bubble.education {
-      background: rgba(52,211,153,.14);
-      border-color: rgba(52,211,153,.26);
-      color: rgba(0,0,0,.9);
-      font-weight:600;
-    }*/
+    .bubble.education {
+  background: rgba(234, 179, 8, 0.18);   /* amber-400 */
+  border-color: rgba(234, 179, 8, 0.45);
+  color: white;
+  font-weight: 600;
+}
+
 
     .moreHint{
       color:rgba(255,255,255,.55);
@@ -972,6 +973,9 @@
     function buildBubble({ icon, text, title }){
       const b = document.createElement("div");
       b.className = "bubble";
+      if (title == "Education"){
+        b.className = "bubble education"
+      }
       if (title) b.title = title;
       b.innerHTML = `${icon || ""}<span class="btxt">${text}</span>`;
       return b;
@@ -983,6 +987,13 @@
       b.textContent = text;
       return b;
     }
+
+    // function buildEduBubble(text){
+    //   const b = document.createElement("div");
+    //   b.className = "bubble education";
+    //   b.textContent = text;
+    //   return b;
+    // }
 
     function renderRows(items){
       rowsEl.innerHTML = "";
@@ -1002,7 +1013,7 @@
         const rowWrap = document.createElement("div");
         rowWrap.className = "rowWrap";
 
-          // If first item, expand it by default
+        // If first item, expand it by default
         if (idx === 0) {
           rowWrap.classList.add("expanded");
         }
@@ -1060,7 +1071,7 @@
 
         const ds = document.createElement("div");
         ds.className = "desc";
-        ds.textContent = subtitle || "—";
+        ds.textContent = subtitle || "";
 
         nameCell.appendChild(nm);
         nameCell.appendChild(ds);
@@ -1159,7 +1170,7 @@
           const s = document.createElement("span");
           s.style.color = "rgba(255,255,255,.35)";
           s.style.fontSize = "13px";
-          s.textContent = "—";
+          s.textContent = "";
           socials.appendChild(s);
         }
 
@@ -1178,7 +1189,7 @@
         } else {
           resume.style.color = "rgba(255,255,255,.35)";
           resume.style.fontSize = "13px";
-          resume.textContent = "—";
+          resume.textContent = "";
         }
 
         // contact
@@ -1203,7 +1214,7 @@
         } else if (canContact){
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.textContent = "Request";
+          btn.textContent = "Contact";
           btn.title = "Contact is available, but no direct link was provided by the API.";
           btn.addEventListener("click", (e) => {
             stopRowToggle(e);
@@ -1214,7 +1225,7 @@
           const s = document.createElement("span");
           s.style.color = "rgba(255,255,255,.35)";
           s.style.fontSize = "13px";
-          s.textContent = "—";
+          s.textContent = "";
           contact.appendChild(s);
         }
 
@@ -1241,7 +1252,7 @@
 
         const aiText = document.createElement("p");
         aiText.className = "aiText";
-        aiText.textContent = safeText(payload.ai_short_description || "").trim() || "—";
+        aiText.textContent = safeText(payload.ai_short_description || "").trim() || "";
 
         aiCard.appendChild(aiTitle);
         aiCard.appendChild(aiText);
