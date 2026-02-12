@@ -8,6 +8,8 @@
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
 
+  <link rel="preload" as="video" href="demo.mp4" type="video/mp4">
+
  <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import {
@@ -84,6 +86,9 @@
         radial-gradient(1100px 700px at 50% 18%, rgba(255,255,255,.10), transparent 55%),
         radial-gradient(900px 600px at 20% 80%, rgba(255,255,255,.06), transparent 60%),
         var(--bg);
+        background-repeat: no-repeat;     /* ← ADD THIS */
+  background-attachment: fixed;     /* optional but recommended */
+  background-size: cover;           /* optional, safer */
       color:var(--text);
       font:16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
            Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -150,41 +155,7 @@
       fill:none;
     }
 
-    /* Golden Gate accent */
-    .gateWrap{
-      position:absolute;
-      inset:-90px -320px auto auto;
-      width:1200px;
-      height:820px;
-      pointer-events:none;
-      opacity:.52;
-      filter:saturate(0);
-      z-index:1;
-      -webkit-mask-image: radial-gradient(900px 600px at 70% 20%, #000 62%, transparent 100%),
-                          linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
-      -webkit-mask-composite: source-in;
-              mask-image: radial-gradient(900px 600px at 70% 20%, #000 62%, transparent 100%),
-                          linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
-              mask-composite: intersect;
-    }
-    .gateGlass{ filter:url(#glassBlur); opacity:.55; }
-    .gateStroke{ stroke:rgba(255,255,255,.18); stroke-width:2; fill:none; }
-    .gateStroke.bold{ stroke-width:2.8; stroke:rgba(255,255,255,.22); }
-    .gateFill{ fill:rgba(255,255,255,.025); }
 
-    @media (max-width:860px){
-      .gateWrap{ right:-520px; top:20px; opacity:.44; width:1200px; height:840px; }
-    }
-    @media (max-width:520px){
-      .gateWrap{ right:-620px; top:30px; opacity:.36; width:1200px; height:900px; }
-    }
-    @media (prefers-reduced-motion: no-preference){
-      .gateWrap{ animation: drift 12s ease-in-out infinite; }
-      @keyframes drift{
-        0%,100%{ transform: translate3d(0,0,0); }
-        50%{ transform: translate3d(-10px, 8px, 0); }
-      }
-    }
 
     /* ====== HERO / SEARCH STATES ====== */
 
@@ -799,78 +770,6 @@
 
   <div class="wrap">
 
-    <!-- Golden Gate glass -->
-    <div class="gateWrap" aria-hidden="true">
-      <svg viewBox="0 0 1000 700">
-        <defs>
-          <filter id="glassBlur" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="3.5" />
-          </filter>
-          <linearGradient id="fadeOutRight" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="white" stop-opacity="1"/>
-            <stop offset="74%" stop-color="white" stop-opacity="1"/>
-            <stop offset="100%" stop-color="white" stop-opacity="0"/>
-          </linearGradient>
-          <mask id="bridgeFadeRight">
-            <rect x="0" y="0" width="1000" height="700" fill="url(#fadeOutRight)" />
-          </mask>
-        </defs>
-
-        <g class="gateGlass" mask="url(#bridgeFadeRight)" transform="translate(90,80) skewX(-16) rotate(6)">
-          <path class="gateStroke bold" d="M60 470 L910 350" />
-          <path class="gateStroke" d="M60 492 L910 372" />
-          <path class="gateStroke bold" d="M40 305 C210 170, 520 150, 960 255" />
-          <path class="gateStroke" d="M40 325 C210 190, 520 170, 960 275" />
-
-          <g>
-            <path class="gateStroke bold" d="M315 205 L315 485" />
-            <path class="gateStroke bold" d="M390 195 L390 474" />
-            <path class="gateStroke" d="M315 205 L390 195" />
-            <path class="gateStroke" d="M315 485 L390 474" />
-            <path class="gateStroke" d="M315 255 L390 246" />
-            <path class="gateStroke" d="M315 315 L390 305" />
-            <path class="gateStroke" d="M315 375 L390 364" />
-            <path class="gateStroke" d="M315 435 L390 423" />
-          </g>
-
-          <g opacity=".95">
-            <path class="gateStroke bold" d="M705 160 L705 410" />
-            <path class="gateStroke bold" d="M760 152 L760 402" />
-            <path class="gateStroke" d="M705 160 L760 152" />
-            <path class="gateStroke" d="M705 410 L760 402" />
-            <path class="gateStroke" d="M705 205 L760 198" />
-            <path class="gateStroke" d="M705 255 L760 247" />
-            <path class="gateStroke" d="M705 305 L760 296" />
-            <path class="gateStroke" d="M705 355 L760 345" />
-          </g>
-
-          <g opacity=".70">
-            <path class="gateStroke" d="M120 468 L120 330" />
-            <path class="gateStroke" d="M160 463 L160 320" />
-            <path class="gateStroke" d="M200 458 L200 308" />
-            <path class="gateStroke" d="M240 452 L240 296" />
-            <path class="gateStroke" d="M280 447 L280 285" />
-
-            <path class="gateStroke" d="M405 430 L405 250" />
-            <path class="gateStroke" d="M440 425 L440 240" />
-            <path class="gateStroke" d="M475 420 L475 230" />
-            <path class="gateStroke" d="M510 415 L510 225" />
-            <path class="gateStroke" d="M545 410 L545 220" />
-            <path class="gateStroke" d="M580 405 L580 220" />
-            <path class="gateStroke" d="M615 400 L615 223" />
-            <path class="gateStroke" d="M650 395 L650 230" />
-            <path class="gateStroke" d="M685 390 L685 240" />
-
-            <path class="gateStroke" d="M790 374 L790 262" />
-            <path class="gateStroke" d="M830 368 L830 268" />
-            <path class="gateStroke" d="M870 362 L870 275" />
-            <path class="gateStroke" d="M910 356 L910 282" />
-          </g>
-
-          <path class="gateFill" d="M45 500 L930 375 L930 425 L45 552 Z" />
-        </g>
-      </svg>
-    </div>
 
     <!-- Nav -->
     <div class="nav">
@@ -933,6 +832,19 @@
           No results yet. Try a different prompt.
         </div>
       </div>
+    </section>
+
+    <section>
+    <video
+  src="demo.mp4"
+  autoplay
+  loop
+  muted
+  playsinline
+  preload="auto"
+  style="max-width:800px; height:auto; box-shadow: 0px 0px 15px gray; border-radius: 20px">
+</video>
+
     </section>
 
     <footer class="foot">
