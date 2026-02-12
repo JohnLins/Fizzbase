@@ -709,6 +709,10 @@
   margin-top: 60px;
   display: flex;
   justify-content: center;
+    aspect-ratio: 9 / 7; /* pick what you want: 1/1, 16/9, 4/5, etc */
+  overflow: hidden;
+  border-radius: 20px;
+   box-shadow: 0px 0px 15px gray;
 }
 
 #demo-vid{
@@ -717,7 +721,10 @@
   height: auto;
   display: block;
   border-radius: 20px;
-  box-shadow: 0px 0px 15px gray;
+
+  object-fit: cover;   /* key: fills frame, crops excess */
+  object-position: center;
+  display: block;
 }
 
   </style>
