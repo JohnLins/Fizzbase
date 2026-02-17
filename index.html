@@ -1,1488 +1,873 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fizzbase — San Francisco People Search</title>
-  <meta name="description" content="Fizzbase is an AI search platform that indexed every person in the Bay Area and mapped how they’re connected." />
-  <link rel="icon" type="image/png" sizes="192x192" href="https://fizzbase.com/logo.png">
-
-
-  <link rel="preload" as="video" href="demo.mp4" type="video/mp4">
-
- <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDNnGT6bd6V8QgCgyF2KxDOuhPdAmHoxsI",
-    authDomain: "fizzbase-43663.firebaseapp.com",
-    projectId: "fizzbase-43663",
-    appId: "1:1064077561104:web:d00c1ab63d6355c2772995"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
-
-  // Expose sign-in for button
-  window.signInWithGoogle = async () => {
-    await signInWithPopup(auth, provider);
-  };
-
-  // Watch auth state
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      showUserAvatar(user);
-    } else {
-      showSignInButton();
-    }
-  });
-
-  function showUserAvatar(user) {
-    //document.getElementById("signin-btn").style.display = "none";
-    document.getElementById("signin-modal").style.display = "none"
-    const avatar = document.getElementById("user-avatar");
-    avatar.src = user.photoURL;
-    avatar.style.display = "block";
-  }
-
-  function showSignInButton() {
-    document.getElementById("signin-btn").style.display = "block";
-    document.getElementById("user-avatar").style.display = "none";
-  }
-
-  window.auth = auth;
-
-</script>
-
-
-  <style>
-    :root{
-      --bg:#0b0b0c;
-      --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.62);
-      --border:rgba(255,255,255,.14);
-      --border2:rgba(255,255,255,.10);
-      --radius:16px;
-      --max:1080px;
-
-      --panel:rgba(255,255,255,.04);
-      --panel2:rgba(255,255,255,.06);
-      --shadow:0 22px 80px rgba(0,0,0,.45);
-    }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-
-    body{
-      margin:0;
-      background:
-        radial-gradient(1100px 700px at 50% 18%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(900px 600px at 20% 80%, rgba(255,255,255,.06), transparent 60%),
-        var(--bg);
-        background-repeat: no-repeat;     /* ← ADD THIS */
-  background-attachment: fixed;     /* optional but recommended */
-  background-size: cover;           /* optional, safer */
-      color:var(--text);
-      font:16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-           Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      letter-spacing:-0.01em;
-      overflow-x:hidden;
-    }
-
-    a{ color:inherit; text-decoration:none; }
-    ::selection{ background: rgba(255,255,255,.18); }
-
-    .wrap{
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding:24px 20px 56px;
-      position:relative;
-      overflow:hidden;
-    }
-
-    /* Nav */
-    .nav{
-      width:min(var(--max), 100%);
-      display:flex;
-      align-items:center;
-      padding:8px 2px 0;
-      z-index:5;
-      position:relative;
-      gap:12px;
-    }
-
-    .brand{ display:flex; align-items:center; gap:10px; }
-    .name{ font-weight:650; letter-spacing:-0.03em; font-size:15px; }
-
-    .addBtn{
-      margin-left:auto;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:9px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.06);
-      color:rgba(255,255,255,.92);
-      font-size:13px;
-      font-weight:600;
-      letter-spacing:-0.01em;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: transform .12s ease, background .12s ease, filter .12s ease;
-    }
-    .addBtn:hover{
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.10);
-      filter: brightness(1.03);
-    }
-    .addBtn svg{
-      width:14px;
-      height:14px;
-      stroke: currentColor;
-      stroke-width:2.2;
-      stroke-linecap:round;
-      stroke-linejoin:round;
-      fill:none;
-    }
-
-
-
-    /* ====== HERO / SEARCH STATES ====== */
-
-    .hero{
-      width:min(var(--max), 100%);
-      margin-top:64px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      text-align:center;
-      z-index:3;
-      position:relative;
-
-      transition: margin-top .45s cubic-bezier(.2,.9,.2,1);
-      will-change: margin-top;
-    }
-
-    body.results .hero{
-      margin-top:18px;
-      text-align:left;
-      align-items:stretch;
-    }
-
-    .heroTop{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:12px;
-      transition:
-        transform .45s cubic-bezier(.2,.9,.2,1),
-        opacity .35s ease,
-        max-height .45s cubic-bezier(.2,.9,.2,1),
-        margin .45s cubic-bezier(.2,.9,.2,1);
-      overflow:hidden;
-      max-height:240px;
-    }
-
-    body.results .heroTop{
-      opacity:0;
-      transform: translateY(-10px);
-      max-height:0px;
-      margin-top:-8px;
-      pointer-events:none;
-    }
-
-    h1{
-      margin:0;
-      font-size:clamp(34px, 5.2vw, 56px);
-      line-height:1.02;
-      letter-spacing:-0.06em;
-      font-weight:720;
-    }
-
-    .sub{
-      margin-top:4px;
-      color:var(--muted);
-      font-size:16px;
-      max-width:65ch;
-    }
-
-    /* Search */
-    .search{
-      margin-top:28px;
-      width:min(820px, 100%);
-      border-radius:var(--radius);
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(255,255,255,.04);
-      backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
-      display:flex;
-      align-items:center;
-      padding:10px;
-      gap:10px;
-      box-shadow:var(--shadow);
-      transition:
-        margin-top .45s cubic-bezier(.2,.9,.2,1),
-        width .45s cubic-bezier(.2,.9,.2,1),
-        box-shadow .45s cubic-bezier(.2,.9,.2,1);
-    }
-
-    body.results .search{
-      margin-top:0px;
-      width:min(var(--max), 100%);
-      box-shadow:0 12px 40px rgba(0,0,0,.38);
-    }
-
-    .spark{
-      width:34px; height:34px;
-      border-radius:12px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);
-      display:grid;
-      place-items:center;
-      color:rgba(255,255,255,.8);
-      flex:0 0 auto;
-    }
-
-    input{
-      flex:1;
-      border:0;
-      outline:0;
-      background:transparent;
-      color:rgba(255,255,255,.92);
-      font-size:15px;
-      padding:10px 6px;
-      letter-spacing:-0.01em;
-      min-width:0;
-    }
-    input::placeholder{ color:rgba(255,255,255,.45); transition:opacity .18s ease; }
-
-    .go{
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(255,255,255,.92);
-      color:rgba(0,0,0,.88);
-      font-weight:650;
-      letter-spacing:-0.02em;
-      cursor:pointer;
-      transition:transform .12s ease, filter .12s ease, opacity .2s ease;
-      flex:0 0 auto;
-    }
-    .go:hover{ transform:translateY(-1px); filter:brightness(.98); }
-    .go[disabled]{ opacity:.65; cursor:not-allowed; transform:none; }
-
-    /* ====== RESULTS AREA ====== */
-
-    .resultsWrap{
-      width:min(var(--max), 100%);
-      margin-top:18px;
-      z-index:3;
-      position:relative;
-
-      opacity:0;
-      transform: translateY(10px);
-      pointer-events:none;
-
-      transition:
-        opacity .35s ease,
-        transform .45s cubic-bezier(.2,.9,.2,1);
-    }
-
-    body.results .resultsWrap{
-      opacity:1;
-      transform: translateY(0px);
-      pointer-events:auto;
-    }
-
-    .metaRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin:10px 2px 12px;
-      color:rgba(255,255,255,.55);
-      font-size:13px;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--border2);
-      background:rgba(255,255,255,.03);
-      color:rgba(255,255,255,.70);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .table{
-      border:1px solid var(--border2);
-      border-radius:18px;
-      overflow:hidden;
-      background:rgba(255,255,255,.02);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 20px 70px rgba(0,0,0,.40);
-    }
-
-    .head{
-      display:grid;
-      grid-template-columns:
-        72px               /* avatar */
-        220px              /* name */
-        minmax(380px, 1fr) /* socials */
-        max-content        /* resume */
-        130px;             /* contact */
-      gap:0;
-      align-items:center;
-
-      padding:12px 14px;
-      background:rgba(255,255,255,.04);
-      border-bottom:1px solid var(--border2);
-      color:rgba(255,255,255,.62);
-      font-size:12px;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-
-    .rowWrap{
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .rowWrap:last-child{ border-bottom:0; }
-
-    .row{
-      display:grid;
-      grid-template-columns:
-        72px
-        220px
-        minmax(380px, 1fr)
-        max-content
-        130px;
-      gap:0;
-      align-items:center;
-
-      padding:12px 14px;
-      transition: background .18s ease;
-      cursor:pointer;
-      user-select:none;
-    }
-    .row:hover{ background:rgba(255,255,255,.03); }
-    .row:focus{ outline:none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
-
-    .cell{ min-width:0; }
-
-    /* round column */
-    .round{
-      color:rgba(255,255,255,.55);
-      font-variant-numeric: tabular-nums;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .pfp{
-      width:34px; height:34px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(255,255,255,.06);
-      overflow:hidden;
-      flex:0 0 auto;
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
-    }
-    .pfp img{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-    }
-
-    /* name column */
-    .nameCol{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      min-width:0;
-    }
-    .personName{
-      font-weight:650;
-      letter-spacing:-0.02em;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .desc{
-      color:rgba(255,255,255,.50);
-      font-size:13px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    /* social chips */
-    .socials{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      align-content:center;
-      min-width:0;
-    }
-
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.06);
-      font-size:13px;
-      line-height:1;
-      white-space:nowrap;
-      color:rgba(255,255,255,.90);
-      transition: transform .12s ease, filter .12s ease, background .12s ease;
-      max-width:100%;
-      cursor:pointer;
-    }
-    .chip:hover{ transform: translateY(-1px); filter: brightness(1.02); }
-    .chip .handle{
-      opacity:.92;
-      max-width:180px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .icon{
-      width:14px; height:14px;
-      display:inline-block;
-      opacity:.92;
-      flex:0 0 auto;
-    }
-
-    /* theme colors per social */
-    .chip.linkedin { background: rgba(10,102,194,.22); border-color: rgba(10,102,194,.35); }
-    .chip.instagram{ background: rgba(225,48,108,.18); border-color: rgba(225,48,108,.30); }
-    .chip.github   { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
-    .chip.scholar  { background: rgba(66,133,244,.18); border-color: rgba(66,133,244,.30); }
-    .chip.site     { background: rgba(52,211,153,.14); border-color: rgba(52,211,153,.26); }
-    .chip.twitter  { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
-    .chip.youtube  { background: rgba(239,68,68,.16); border-color: rgba(239,68,68,.28); }
-    .chip.tiktok   { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
-
-    /* resume link */
-    .resume a{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.04);
-      color:rgba(255,255,255,.86);
-      font-size:13px;
-      transition: transform .12s ease, filter .12s ease;
-      max-width:100%;
-      cursor:pointer;
-    }
-    .resume a:hover{ transform: translateY(-1px); filter: brightness(1.02); }
-    .resume span{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:220px;
-      display:inline-block;
-      opacity:.92;
-    }
-
-    /* contact button */
-    .contact{
-      display:flex;
-      justify-content:flex-end;
-    }
-    .contact a, .contact button{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:9px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.92);
-      color:rgba(0,0,0,.88);
-      font-weight:650;
-      font-size:13px;
-      letter-spacing:-0.01em;
-      transition: transform .12s ease, filter .12s ease;
-      cursor:pointer;
-    }
-    .contact a:hover, .contact button:hover{ transform: translateY(-1px); filter:brightness(.98); }
-    .contact button{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.10);
-      color:rgba(255,255,255,.88);
-    }
-    .contact button:hover{ filter:brightness(1.05); }
-
-    /* Expand details */
-    .details{
-      display:none;
-      padding:14px 14px 16px;
-      background:rgba(255,255,255,.018);
-      border-top:1px solid rgba(255,255,255,.06);
-    }
-    .rowWrap.expanded .details{ display:block; }
-
-    .detailsGrid{
-      display:grid;
-      grid-template-columns: 1.35fr .65fr;
-      gap:14px;
-      align-items:start;
-    }
-
-    .aiCard{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:12px 12px;
-      box-shadow: 0 12px 38px rgba(0,0,0,.32);
-      overflow:hidden;
-    }
-    .aiTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-      color:rgba(255,255,255,.74);
-      font-size:12px;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-    .aiText{
-      color:rgba(255,255,255,.86);
-      font-size:14px;
-      line-height:1.5;
-      margin:0;
-      display:-webkit-box;
-      -webkit-line-clamp:3;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-    }
-    .rowWrap.expanded .aiText{
-      -webkit-line-clamp:unset;
-      overflow:visible;
-    }
-
-    .tagPanel{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .tagRow{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-    }
-
-    .bubble{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.04);
-      color:rgba(255,255,255,.86);
-      font-size:13px;
-      line-height:1;
-      max-width:100%;
-    }
-
-    .bubble .btxt{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:260px;
-    }
-
-    .bubble.skill{
-      background:rgba(255,255,255,.03);
-      border-color: rgba(255,255,255,.10);
-      color:rgba(255,255,255,.84);
-    }
-
-    .bubble.education {
-  background: rgba(234, 179, 8, 0.18);   /* amber-400 */
-  border-color: rgba(234, 179, 8, 0.45);
-  color: white;
-  font-weight: 600;
-}
-
-
-    .moreHint{
-      color:rgba(255,255,255,.55);
-      font-size:12px;
-      margin-top:2px;
-    }
-
-    /* Empty states */
-    .empty{
-      padding:22px 18px;
-      color:rgba(255,255,255,.58);
-      font-size:14px;
-    }
-
-    .error{
-      margin-top:10px;
-      padding:12px 14px;
-      border-radius:14px;
-      border:1px solid rgba(255,90,90,.25);
-      background:rgba(255,90,90,.08);
-      color:rgba(255,255,255,.86);
-      display:none;
-    }
-    .error.show{ display:block; }
-
-    /* Responsive */
-    @media (max-width:980px){
-      .head, .row{
-        grid-template-columns:
-          72px
-          minmax(160px, 240px)
-          minmax(260px, 1fr)
-          max-content
-          130px;
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fizzbase — San Francisco People Search</title>
+    <meta
+      name="description"
+      content="Fizzbase is an AI search platform that indexed every person in the Bay Area and mapped how they’re connected."
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="https://fizzbase.com/logo.png"
+    />
+    <link rel="stylesheet" href="style.css" />
+
+    <link rel="preload" as="video" href="demo.mp4" type="video/mp4" />
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNnGT6bd6V8QgCgyF2KxDOuhPdAmHoxsI",
+        authDomain: "fizzbase-43663.firebaseapp.com",
+        projectId: "fizzbase-43663",
+        appId: "1:1064077561104:web:d00c1ab63d6355c2772995",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+
+      // Expose sign-in for button
+      window.signInWithGoogle = async () => {
+        await signInWithPopup(auth, provider);
+      };
+
+      // Watch auth state
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          showUserAvatar(user);
+        } else {
+          showSignInButton();
+        }
+      });
+
+      function showUserAvatar(user) {
+        //document.getElementById("signin-btn").style.display = "none";
+        document.getElementById("signin-modal").style.display = "none";
+        const avatar = document.getElementById("user-avatar");
+        avatar.src = user.photoURL;
+        avatar.style.display = "block";
       }
-      .resume span{ max-width:150px; }
-    }
 
-    @media (max-width:860px){
-      .detailsGrid{ grid-template-columns: 1fr; }
-    }
-
-    @media (max-width:760px){
-      .head{ display:none; }
-      .row{
-        grid-template-columns: 1fr;
-        gap:10px;
-        padding:14px;
+      function showSignInButton() {
+        document.getElementById("signin-btn").style.display = "block";
+        document.getElementById("user-avatar").style.display = "none";
       }
-      .round{ justify-content:flex-start; }
-      .contact{ justify-content:flex-start; }
-      .resume span{ max-width:240px; }
-    }
 
-    /* Footer */
-    .foot{
-      margin-top:auto;
-      width:min(var(--max), 100%);
-      padding-top:22px;
-      color:rgba(255,255,255,.34);
-      font-size:12px;
-      text-align:center;
-      border-top:1px solid rgba(255,255,255,.08);
-      margin-top:80px;
-      z-index:3;
-      position:relative;
-    }
+      window.auth = auth;
+    </script>
+  </head>
 
-    /* Respect reduced motion */
-    @media (prefers-reduced-motion: reduce){
-      *{ transition:none !important; animation:none !important; }
-    }
+  <body>
+    <div id="signin-modal">
+      <h2 style="margin: 0; font-size: 1.8rem; font-weight: 700">Sign In</h2>
+      <p
+        style="
+          margin: 0;
+          color: var(--muted, rgba(255, 255, 255, 0.62));
+          font-size: 0.95rem;
+        "
+      >
+        For more searches and contact privileges, please sign in for free
+      </p>
 
-
-
-    .demoSection{
-  width: min(var(--max), 100%);
-  margin-top: 60px;
-  display: flex;
-  justify-content: center;
-    aspect-ratio: 9 / 7; /* pick what you want: 1/1, 16/9, 4/5, etc */
-  overflow: hidden;
-  border-radius: 20px;
-   box-shadow: 0px 0px 15px gray;
-}
-
-#demo-vid{
-  width: 100%;
-  max-width: 800px;
-  height: auto;
-  display: block;
-  border-radius: 20px;
-
-  object-fit: cover;   /* key: fills frame, crops excess */
-  object-position: center;
-  display: block;
-}
-
-  </style>
-</head>
-
-<body>
-
-
-
-
-<div id="signin-modal" style="
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 480px;
-  max-width: 90%;
-  background: rgba(11,11,12,0.95);
-  border-radius: 16px;
-  padding: 62px 44px;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  line-height: 1.25;
-  text-align: center;
-  color: var(--text, rgba(255,255,255,.92));
-  box-shadow: 0 22px 80px rgba(0,0,0,.45);
-  z-index: 999;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  box-shadow: 0px 0px 20px rgba(255,255,255,.10);
-">
-  <h2 style="margin:0; font-size:1.8rem; font-weight:700;">Sign In</h2>
-  <p style="margin:0; color: var(--muted, rgba(255,255,255,.62)); font-size:0.95rem;">
-    For more searches and contact privileges, please sign in for free
-  </p>
-
-  <button id="signin-btn" onclick="signInWithGoogle()" style="
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 14px;
-    line-height: 1;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.10);
-    color: rgba(255,255,255,.92);
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: transform .12s ease, filter .12s ease, background .12s ease;
-  ">
-    <!-- Google Logo SVG -->
-    <svg width="20" height="20" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg">
-      <path fill="#4285F4" d="M533.5 278.4c0-17.6-1.4-34.5-4.1-51H272v96.6h146.9c-6.3 33.8-25 62.5-53.3 81.7v68h86.2c50.5-46.5 81.7-115.2 81.7-195.3z"/>
-      <path fill="#34A853" d="M272 544.3c72.6 0 133.5-24.1 178-65.3l-86.2-68c-23.9 16-54.4 25.6-91.8 25.6-70.7 0-130.5-47.7-152-111.7h-90v70.2c44.4 87.7 135.2 149.2 242 149.2z"/>
-      <path fill="#FBBC05" d="M120 317.1c-10.5-31.5-10.5-65.4 0-96.9v-70.2h-90c-38.5 76.8-38.5 167.9 0 244.7l90-77.6z"/>
-      <path fill="#EA4335" d="M272 107.9c39.4 0 74.8 13.5 102.6 40.1l76.9-76.9C406.1 23.1 345.2 0 272 0 165.2 0 74.4 61.5 30 149.2l90 70.2c21.5-64 81.3-111.5 152-111.5z"/>
-    </svg>
-    Sign in with Google
-  </button>
-</div>
-
-
-
-
-
-  <div class="wrap">
-
-
-    <!-- Nav -->
-    <div class="nav">
-      <a class="brand" href="#" aria-label="Fizzbase home">
-        <img src="logo2.png" style="width: 70px; height: auto;" />
-        <span class="name">Fizzbase</span>
-      </a>
-
-      <a class="addBtn" href="https://www.linkedin.com/posts/johnplins_search-engine-for-people-in-sf-share-7427395891163992064-h2Ie?utm_source=social_share_send&utm_medium=android_app&rcm=ACoAACtEYL8B-ErNKJQifsmR1x6YdrshBU1vves&utm_campaign=copy_link" target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14"/>
+      <button id="signin-btn" onclick="signInWithGoogle()">
+        <!-- Google Logo SVG -->
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 533.5 544.3"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill="#4285F4"
+            d="M533.5 278.4c0-17.6-1.4-34.5-4.1-51H272v96.6h146.9c-6.3 33.8-25 62.5-53.3 81.7v68h86.2c50.5-46.5 81.7-115.2 81.7-195.3z"
+          />
+          <path
+            fill="#34A853"
+            d="M272 544.3c72.6 0 133.5-24.1 178-65.3l-86.2-68c-23.9 16-54.4 25.6-91.8 25.6-70.7 0-130.5-47.7-152-111.7h-90v70.2c44.4 87.7 135.2 149.2 242 149.2z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M120 317.1c-10.5-31.5-10.5-65.4 0-96.9v-70.2h-90c-38.5 76.8-38.5 167.9 0 244.7l90-77.6z"
+          />
+          <path
+            fill="#EA4335"
+            d="M272 107.9c39.4 0 74.8 13.5 102.6 40.1l76.9-76.9C406.1 23.1 345.2 0 272 0 165.2 0 74.4 61.5 30 149.2l90 70.2c21.5-64 81.3-111.5 152-111.5z"
+          />
         </svg>
-        <span>Add yourself</span> <img id="user-avatar" style="display:none; width:36px; height:36px; border-radius:50%; "/>
-      </a>
+        Sign in with Google
+      </button>
     </div>
 
-    <!-- Hero -->
-    <main class="hero">
-      <div class="heroTop" id="heroTop">
-        <h1 style="font-size: clamp(1.5rem, 6vw, 4rem); white-space: nowrap;">Search Engine for People in SF</h1>
-        <div class="sub">
-          Fizzbase is an AI search platform that indexed every important person in the Bay Area
-        </div>
+    <div class="wrap">
+      <!-- Nav -->
+      <div class="nav">
+        <a class="brand" href="#" aria-label="Fizzbase home">
+          <img src="logo2.png" style="width: 70px; height: auto" />
+          <span class="name">Fizzbase</span>
+        </a>
+
+        <a
+          class="addBtn"
+          href="https://www.linkedin.com/posts/johnplins_search-engine-for-people-in-sf-share-7427395891163992064-h2Ie?utm_source=social_share_send&utm_medium=android_app&rcm=ACoAACtEYL8B-ErNKJQifsmR1x6YdrshBU1vves&utm_campaign=copy_link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span>Add yourself</span>
+          <img
+            id="user-avatar"
+            style="display: none; width: 36px; height: 36px; border-radius: 50%"
+          />
+        </a>
       </div>
 
-      <form class="search" id="searchForm" autocomplete="off">
-
-        <input id="q" type="text" spellcheck="false" aria-label="Search Fizzbase" />
-        <button class="go" id="goBtn" type="submit"><!-- Thicker search (magnifying glass) icon SVG -->
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M16.5 16.5 21 21"
-        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-</svg></button>
-      </form>
-
-      <div class="error" id="errorBox"></div>
-    </main>
-
-    <!-- Results -->
-    <section class="resultsWrap" id="resultsWrap" aria-live="polite">
-      <div class="metaRow">
-        <div class="pill" id="resultCount">0 results</div>
-        <div class="pill" id="authPill">AI Search</div>
-      </div>
-
-      <div class="table" id="table">
-        <div class="head">
-          <div class="cell">Round</div>
-          <div class="cell">Name</div>
-          <div class="cell">Social</div>
-          <div class="cell">Resume</div>
-          <div class="cell" style="text-align:right;">Contact</div>
+      <!-- Hero -->
+      <main class="hero">
+        <div class="heroTop" id="heroTop">
+          <h1 style="font-size: clamp(1.5rem, 6vw, 4rem); white-space: nowrap">
+            Search Engine for People in SF
+          </h1>
+          <div class="sub">
+            Fizzbase is an AI search platform that indexed every important
+            person in the Bay Area
+          </div>
         </div>
 
-        <div id="rows"></div>
+        <form class="search" id="searchForm" autocomplete="off">
+          <input
+            id="q"
+            type="text"
+            spellcheck="false"
+            aria-label="Search Fizzbase"
+          />
+          <button class="go" id="goBtn" type="submit">
+            <!-- Thicker search (magnifying glass) icon SVG -->
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M16.5 16.5 21 21"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </form>
 
-        <div class="empty" id="empty" style="display:none;">
-          No results yet. Try a different prompt.
+        <div class="error" id="errorBox"></div>
+      </main>
+
+      <!-- Results -->
+      <section class="resultsWrap" id="resultsWrap" aria-live="polite">
+        <div class="metaRow">
+          <div class="pill" id="resultCount">0 results</div>
+          <div class="pill" id="authPill">AI Search</div>
         </div>
-      </div>
-    </section>
 
-    <section>
+        <div class="table" id="table">
+          <div class="head">
+            <div class="cell">Round</div>
+            <div class="cell">Name</div>
+            <div class="cell">Social</div>
+            <div class="cell">Resume</div>
+            <div class="cell" style="text-align: right">Contact</div>
+          </div>
 
-<section class="demoSection">
-  <video
-    src="demo.mp4"
-    autoplay
-    loop
-    muted
-    playsinline
-    preload="auto"
-    id="demo-vid">
-  </video>
-</section>
+          <div id="rows"></div>
 
-    </section>
+          <div class="empty" id="empty" style="display: none">
+            No results yet. Try a different prompt.
+          </div>
+        </div>
+      </section>
 
- <!--   <footer class="foot">
+      <section>
+        <section class="demoSection">
+          <video
+            src="demo.mp4"
+            autoplay
+            loop
+            muted
+            playsinline
+            preload="auto"
+            id="demo-vid"
+          ></video>
+        </section>
+      </section>
+
+      <!--   <footer class="foot">
       © <span id="year"></span> Fizzbase
     </footer>-->
-  </div>
+    </div>
 
-  <script>
-    // ====== Placeholder rotation ======
-    const examples = [
-      "founders connected to YC who hired product leaders from Apple",
-      "investors connected to climate startups in SF",
-      "engineers who worked at Stripe and studied at Stanford",
-      "designers connected to AI labs in the Mission",
-      "founders connected to Sequoia and ex-Google PMs"
-    ];
-    const input = document.getElementById("q");
-    let i = 0;
+    <script>
+      // ====== Placeholder rotation ======
+      const examples = [
+        "founders connected to YC who hired product leaders from Apple",
+        "investors connected to climate startups in SF",
+        "engineers who worked at Stripe and studied at Stanford",
+        "designers connected to AI labs in the Mission",
+        "founders connected to Sequoia and ex-Google PMs",
+      ];
+      const input = document.getElementById("q");
+      let i = 0;
 
-    function setPlaceholder(text){
-      if (document.activeElement === input && input.value) return;
-      input.placeholder = text;
-    }
-    setPlaceholder(examples[0]);
-    i = 1;
-    setInterval(() => {
-      setPlaceholder(examples[i]);
-      i = (i + 1) % examples.length;
-    }, 2600);
+      function setPlaceholder(text) {
+        if (document.activeElement === input && input.value) return;
+        input.placeholder = text;
+      }
+      setPlaceholder(examples[0]);
+      i = 1;
+      setInterval(() => {
+        setPlaceholder(examples[i]);
+        i = (i + 1) % examples.length;
+      }, 2600);
 
-    window.addEventListener("load", () => input.focus());
-    //document.getElementById("year").textContent = new Date().getFullYear();
+      window.addEventListener("load", () => input.focus());
+      //document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ====== UI helpers ======
-    const goBtn = document.getElementById("goBtn");
-    const errorBox = document.getElementById("errorBox");
-    const rowsEl = document.getElementById("rows");
-    const emptyEl = document.getElementById("empty");
-    const resultCountEl = document.getElementById("resultCount");
-    const authPillEl = document.getElementById("authPill");
+      // ====== UI helpers ======
+      const goBtn = document.getElementById("goBtn");
+      const errorBox = document.getElementById("errorBox");
+      const rowsEl = document.getElementById("rows");
+      const emptyEl = document.getElementById("empty");
+      const resultCountEl = document.getElementById("resultCount");
+      const authPillEl = document.getElementById("authPill");
 
-    function showError(msg){
-      errorBox.textContent = msg;
-      errorBox.classList.add("show");
-    }
-    function clearError(){
-      errorBox.textContent = "";
-      errorBox.classList.remove("show");
-    }
-    function setResultsMode(on){
-      document.body.classList.toggle("results", !!on);
-    }
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.classList.add("show");
+      }
+      function clearError() {
+        errorBox.textContent = "";
+        errorBox.classList.remove("show");
+      }
+      function setResultsMode(on) {
+        document.body.classList.toggle("results", !!on);
+      }
 
-    // ====== Icons ======
-    const ICONS = {
-      linkedin: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      // ====== Icons ======
+      const ICONS = {
+        linkedin: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M6 9h3v10H6V9Zm1.5-4.5A1.75 1.75 0 1 1 7.5 8a1.75 1.75 0 0 1 0-3.5ZM11 9h2.9v1.4h.04c.4-.76 1.4-1.56 2.88-1.56 3.08 0 3.65 2.02 3.65 4.65V19h-3v-4.75c0-1.13-.02-2.58-1.57-2.58-1.57 0-1.81 1.23-1.81 2.5V19h-3V9Z"
           fill="currentColor"/>
       </svg>`,
-      instagram: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        instagram: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm9 2h-9A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4Zm-4.5 4a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm5.4-2.1a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"
           fill="currentColor"/>
       </svg>`,
-      github: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        github: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M12 2C6.48 2 2 6.58 2 12.24c0 4.53 2.87 8.38 6.84 9.73.5.1.68-.22.68-.48v-1.7c-2.78.62-3.36-1.1-3.36-1.1-.45-1.2-1.11-1.52-1.11-1.52-.9-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.58 2.36 1.12 2.94.86.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.15-4.56-5.12 0-1.13.39-2.05 1.03-2.77-.1-.26-.45-1.33.1-2.77 0 0 .84-.28 2.75 1.06.8-.23 1.65-.34 2.5-.34.85 0 1.7.11 2.5.34 1.9-1.34 2.74-1.06 2.74-1.06.56 1.44.21 2.51.1 2.77.64.72 1.03 1.64 1.03 2.77 0 3.98-2.34 4.86-4.57 5.12.36.32.68.95.68 1.92v2.84c0 .27.18.59.69.48A10.2 10.2 0 0 0 22 12.24C22 6.58 17.52 2 12 2Z"/>
       </svg>`,
-      scholar: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        scholar: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm0 14L4.2 12.8 3 13.45 12 18l9-4.55-1.2-.65L12 17Z"/>
       </svg>`,
-      site: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        site: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm7.94 9h-3.17a15.7 15.7 0 0 0-1.36-5.02A8.03 8.03 0 0 1 19.94 11ZM12 4c.9 0 2.23 1.83 2.9 5H9.1C9.77 5.83 11.1 4 12 4ZM4.06 13h3.17c.25 1.74.74 3.44 1.36 5.02A8.03 8.03 0 0 1 4.06 13Zm3.17-2H4.06a8.03 8.03 0 0 1 4.53-5.02A15.7 15.7 0 0 0 7.23 11ZM12 20c-.9 0-2.23-1.83-2.9-5h5.8c-.67 3.17-2 5-2.9 5Zm3.4-1.98c.62-1.58 1.11-3.28 1.36-5.02h3.17a8.03 8.03 0 0 1-4.53 5.02ZM16.9 11H7.1c.12-1.52.44-3.03.88-4H16c.44.97.76 2.48.9 4Zm-9.8 2h9.8c-.12 1.52-.44 3.03-.88 4H8c-.44-.97-.76-2.48-.9-4Z"/>
       </svg>`,
-      doc: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        doc: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V8h4.5L14 3.5Z"/>
       </svg>`,
-      twitter: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        twitter: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.8l-5.3-6.6L5 22H2l7.3-8.4L1 2h6.9l4.8 6.1L18.9 2Zm-1.2 18h1.7L7.0 3.9H5.2L17.7 20Z"/>
       </svg>`,
-      youtube: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        youtube: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.7 4.6 12 4.6 12 4.6s-5.7 0-7.5.5A3 3 0 0 0 2.4 7.2 31 31 0 0 0 2 12a31 31 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.8.5 7.5.5 7.5.5s5.7 0 7.5-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 22 12a31 31 0 0 0-.4-4.8ZM10 15.5v-7l6 3.5-6 3.5Z"/>
       </svg>`,
-      tiktok: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        tiktok: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M16.6 2c.3 2.6 1.8 4.1 4.4 4.4v3.3c-1.5.1-2.9-.3-4.3-1.1v7.2c0 3.7-2.6 6.2-6.2 6.2-3.4 0-6-2.3-6.4-5.7-.5-4.1 2.7-7.2 6.6-7.2.5 0 1 0 1.4.2v3.6c-.4-.1-.8-.2-1.2-.2-1.7 0-3 1.4-2.8 3.2.1 1.4 1.3 2.5 2.7 2.6 1.6.1 3-1.1 3-2.8V2h2.8Z"/>
       </svg>`,
-      gradcap: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        gradcap: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm0 14L4.2 12.8 3 13.45 12 18l9-4.55-1.2-.65L12 17Z"/>
-      </svg>`
-    };
+      </svg>`,
+      };
 
-    function normalizeUrl(url){
-      if (!url) return "";
-      if (/^https?:\/\//i.test(url)) return url;
-      return "https://" + String(url).replace(/^\/+/, "");
-    }
-
-    function stopRowToggle(e){
-      // clicking links/buttons inside row should not toggle expand
-      e.stopPropagation();
-    }
-
-    function safeText(v){
-      if (v === null || v === undefined) return "";
-      return String(v);
-    }
-
-    function parseEducationLabel(payload){
-      // Prefer educations_details if present (already looks human)
-      const simple = safeText(payload.educations_details || "").trim();
-      if (simple) return simple;
-
-      // Next: try parsing `education` JSON string
-      const raw = payload.education;
-      if (!raw) return "";
-      try{
-        const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
-        if (!Array.isArray(arr) || arr.length === 0) return "";
-        const first = arr[0] || {};
-        const title = safeText(first.title || "").trim();
-        return title;
-      } catch {
-        return "";
+      function normalizeUrl(url) {
+        if (!url) return "";
+        if (/^https?:\/\//i.test(url)) return url;
+        return "https://" + String(url).replace(/^\/+/, "");
       }
-    }
 
-    function buildChip({ kind, label, href }){
-      const a = document.createElement("a");
-      a.className = `chip ${kind}`;
-      a.href = href;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.innerHTML = `${ICONS[kind] || ""}<span class="handle">${label}</span>`;
-      a.addEventListener("click", stopRowToggle);
-      return a;
-    }
-
-    function handleFromUrl(url, domain){
-      const u = safeText(url).trim();
-      if (!u) return "";
-      try{
-        const parsed = new URL(normalizeUrl(u));
-        const host = parsed.hostname.replace(/^www\./,'');
-        if (domain && !host.includes(domain)) return host;
-        const path = parsed.pathname.replace(/\/+$/,'');
-        const bits = path.split("/").filter(Boolean);
-        return bits.length ? bits[bits.length-1] : host;
-      } catch {
-        return u;
+      function stopRowToggle(e) {
+        // clicking links/buttons inside row should not toggle expand
+        e.stopPropagation();
       }
-    }
 
-    function buildBubble({ icon, text, title }){
-      const b = document.createElement("div");
-      b.className = "bubble";
-      if (title == "Education"){
-        b.className = "bubble education"
+      function safeText(v) {
+        if (v === null || v === undefined) return "";
+        return String(v);
       }
-      if (title) b.title = title;
-      b.innerHTML = `${icon || ""}<span class="btxt">${text}</span>`;
-      return b;
-    }
 
-    function buildSkillBubble(text){
-      const b = document.createElement("div");
-      b.className = "bubble skill";
-      b.textContent = text;
-      return b;
-    }
+      function parseEducationLabel(payload) {
+        // Prefer educations_details if present (already looks human)
+        const simple = safeText(payload.educations_details || "").trim();
+        if (simple) return simple;
 
-    // function buildEduBubble(text){
-    //   const b = document.createElement("div");
-    //   b.className = "bubble education";
-    //   b.textContent = text;
-    //   return b;
-    // }
-
-    function renderRows(items){
-      rowsEl.innerHTML = "";
-      if (!items || items.length === 0){
-        emptyEl.style.display = "block";
-        return;
+        // Next: try parsing `education` JSON string
+        const raw = payload.education;
+        if (!raw) return "";
+        try {
+          const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
+          if (!Array.isArray(arr) || arr.length === 0) return "";
+          const first = arr[0] || {};
+          const title = safeText(first.title || "").trim();
+          return title;
+        } catch {
+          return "";
+        }
       }
-      emptyEl.style.display = "none";
 
-      items.forEach((item, idx) => {
-        const payload = (item && item.payload) ? item.payload : {};
-        const name = safeText(payload.name || (payload.first_name && payload.last_name ? `${payload.first_name} ${payload.last_name}` : "") || "Unknown").trim() || "Unknown";
-        const city = safeText(payload.city || "").trim();
-        const company = safeText(payload.current_company_name || "").trim();
-        const subtitle = [company, city].filter(Boolean).join(" • ");
+      function buildChip({ kind, label, href }) {
+        const a = document.createElement("a");
+        a.className = `chip ${kind}`;
+        a.href = href;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.innerHTML = `${ICONS[kind] || ""}<span class="handle">${label}</span>`;
+        a.addEventListener("click", stopRowToggle);
+        return a;
+      }
 
-        const rowWrap = document.createElement("div");
-        rowWrap.className = "rowWrap";
-
-        // If first item, expand it by default
-        if (idx === 0) {
-          rowWrap.classList.add("expanded");
+      function handleFromUrl(url, domain) {
+        const u = safeText(url).trim();
+        if (!u) return "";
+        try {
+          const parsed = new URL(normalizeUrl(u));
+          const host = parsed.hostname.replace(/^www\./, "");
+          if (domain && !host.includes(domain)) return host;
+          const path = parsed.pathname.replace(/\/+$/, "");
+          const bits = path.split("/").filter(Boolean);
+          return bits.length ? bits[bits.length - 1] : host;
+        } catch {
+          return u;
         }
+      }
 
-        // Main row
-        const row = document.createElement("div");
-        row.className = "row";
-        row.tabIndex = 0;
-        row.setAttribute("role", "button");
-        //row.setAttribute("aria-expanded", idx === 0 ? "true" : "false");
-        row.title = "Click to expand";
-
-        function toggle(){
-          const on = !rowWrap.classList.contains("expanded");
-          // collapse others (optional, feels cleaner)
-          document.querySelectorAll(".rowWrap.expanded").forEach(el => {
-            if (el !== rowWrap) {
-              el.classList.remove("expanded");
-              const r = el.querySelector(".row");
-              if (r) r.setAttribute("aria-expanded", "false");
-            }
-          });
-          rowWrap.classList.toggle("expanded", on);
-          row.setAttribute("aria-expanded", on ? "true" : "false");
+      function buildBubble({ icon, text, title }) {
+        const b = document.createElement("div");
+        b.className = "bubble";
+        if (title == "Education") {
+          b.className = "bubble education";
         }
+        if (title) b.title = title;
+        b.innerHTML = `${icon || ""}<span class="btxt">${text}</span>`;
+        return b;
+      }
 
-        row.addEventListener("click", toggle);
-        row.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggle();
-          }
-        });
+      function buildSkillBubble(text) {
+        const b = document.createElement("div");
+        b.className = "bubble skill";
+        b.textContent = text;
+        return b;
+      }
 
-        // round + avatar
-        const round = document.createElement("div");
-        round.className = "cell round";
+      // function buildEduBubble(text){
+      //   const b = document.createElement("div");
+      //   b.className = "bubble education";
+      //   b.textContent = text;
+      //   return b;
+      // }
 
-        const pfp = document.createElement("div");
-        pfp.className = "pfp";
-        const img = document.createElement("img");
-        img.alt = name + " profile photo";
-        img.loading = "lazy";
-        img.src = safeText(payload.avatar || "");
-        img.onerror = () => { img.remove(); };
-        pfp.appendChild(img);
-        round.appendChild(pfp);
-
-        // name + subtitle
-        const nameCell = document.createElement("div");
-        nameCell.className = "cell nameCol";
-        const nm = document.createElement("div");
-        nm.className = "personName";
-        nm.textContent = name;
-
-        const ds = document.createElement("div");
-        ds.className = "desc";
-        ds.textContent = subtitle || "";
-
-        nameCell.appendChild(nm);
-        nameCell.appendChild(ds);
-
-        // socials
-        const socials = document.createElement("div");
-        socials.className = "cell socials";
-
-        const linkedin = safeText(payload.linkedin_url || "").trim();
-        if (linkedin){
-          socials.appendChild(buildChip({
-            kind: "linkedin",
-            label: "@" + handleFromUrl(linkedin, "linkedin.com"),
-            href: normalizeUrl(linkedin)
-          }));
-        }
-
-        const instagram = safeText(payload.instagram_url || "").trim();
-        if (instagram){
-          socials.appendChild(buildChip({
-            kind: "instagram",
-            label: "@" + handleFromUrl(instagram, "instagram.com"),
-            href: normalizeUrl(instagram)
-          }));
-        }
-
-        const github = safeText(payload.github_url || "").trim();
-        if (github){
-          const h = handleFromUrl(github, "github.com");
-          socials.appendChild(buildChip({
-            kind: "github",
-            label: h ? ("@" + h.replace(/^@/,"")) : "GitHub",
-            href: normalizeUrl(github)
-          }));
-        }
-
-        const scholar = safeText(payload.google_scholar_url || "").trim();
-        if (scholar){
-          socials.appendChild(buildChip({
-            kind: "scholar",
-            label: "Scholar",
-            href: normalizeUrl(scholar)
-          }));
-        }
-
-        const site = safeText(payload.personal_site_url || "").trim();
-        if (site){
-          socials.appendChild(buildChip({
-            kind: "site",
-            label: "Site",
-            href: normalizeUrl(site)
-          }));
-        }
-
-        const twitter = safeText(payload.twitter_url || "").trim();
-        if (twitter){
-          socials.appendChild(buildChip({
-            kind: "twitter",
-            label: "@" + handleFromUrl(twitter, "x.com").replace(/^@/,""),
-            href: normalizeUrl(twitter)
-          }));
-        }
-
-        // function normalizeYouTubeHandle(url) {
-        //     const match = url.match(/^https?:\/\/(www\.)?youtube\.com\/([^/?#]+)/i);
-        //     if (!match) return url;
-        //
-        //     const username = match[2];
-        //
-        //     // already a handle
-        //     if (username.startsWith("@")) return url;
-        //
-        //     return `https://www.youtube.com/@${username}`;
-        //   }
-
-
-        const youtube = safeText(payload.youtube_url || "").trim();
-        if (youtube){
-          socials.appendChild(buildChip({
-            kind: "youtube",
-            label: "YouTube",
-            href: normalizeUrl(youtube)
-          }));
-        }
-
-        const tiktok = safeText(payload.tiktok_url || "").trim();
-        if (tiktok){
-          socials.appendChild(buildChip({
-            kind: "tiktok",
-            label: "TikTok",
-            href: normalizeUrl(tiktok)
-          }));
-        }
-
-        if (!socials.childNodes.length){
-          const s = document.createElement("span");
-          s.style.color = "rgba(255,255,255,.35)";
-          s.style.fontSize = "13px";
-          s.textContent = "";
-          socials.appendChild(s);
-        }
-
-        // resume
-        const resume = document.createElement("div");
-        resume.className = "cell resume";
-        const resumeUrl = safeText(payload.resume_url || "").trim();
-        if (resumeUrl){
-          const a = document.createElement("a");
-          a.href = normalizeUrl(resumeUrl);
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.innerHTML = `${ICONS.doc}<span>Resume</span>`;
-          a.addEventListener("click", stopRowToggle);
-          resume.appendChild(a);
-        } else {
-          resume.style.color = "rgba(255,255,255,.35)";
-          resume.style.fontSize = "13px";
-          resume.textContent = "";
-        }
-
-        // contact
-        const contact = document.createElement("div");
-        contact.className = "cell contact";
-
-        // New API sometimes gives boolean flags `contact_url: true`, `email: true`
-        const contactUrl = payload.contact_url;
-        const email = payload.email;
-
-        const contactUrlString = (typeof contactUrl === "string") ? contactUrl.trim() : "";
-        const canContact = !!contactUrlString || contactUrl === true || email === true;
-
-        if (contactUrlString){
-          const a = document.createElement("a");
-          a.href = normalizeUrl(contactUrlString);
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.textContent = "Contact";
-          a.addEventListener("click", stopRowToggle);
-          contact.appendChild(a);
-        } else if (canContact){
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.textContent = "Contact";
-          btn.title = "Contact is available, but no direct link was provided by the API.";
-
-          btn.addEventListener("click", (e) => {
-            stopRowToggle(e);
-            document.getElementById("signin-modal").style.display = "flex";
-          });
-          contact.appendChild(btn);
-        } else {
-          const s = document.createElement("span");
-          s.style.color = "rgba(255,255,255,.35)";
-          s.style.fontSize = "13px";
-          s.textContent = "";
-          contact.appendChild(s);
-        }
-
-        row.appendChild(round);
-        row.appendChild(nameCell);
-        row.appendChild(socials);
-        row.appendChild(resume);
-        row.appendChild(contact);
-
-        // Details area
-        const details = document.createElement("div");
-        details.className = "details";
-
-        const detailsGrid = document.createElement("div");
-        detailsGrid.className = "detailsGrid";
-
-        // AI short description card
-        const aiCard = document.createElement("div");
-        aiCard.className = "aiCard";
-
-        const aiTitle = document.createElement("div");
-        aiTitle.className = "aiTitle";
-        aiTitle.innerHTML = `<span>AI Summary</span>`;
-
-        const aiText = document.createElement("p");
-        aiText.className = "aiText";
-        aiText.textContent = safeText(payload.ai_short_description || "").trim() || "";
-
-        aiCard.appendChild(aiTitle);
-        aiCard.appendChild(aiText);
-
-        // Tag panel: education + skills
-        const tagPanel = document.createElement("div");
-        tagPanel.className = "tagPanel";
-
-        const eduLabel = parseEducationLabel(payload);
-        const eduRow = document.createElement("div");
-        eduRow.className = "tagRow";
-        if (eduLabel){
-          eduRow.appendChild(buildBubble({
-            icon: ICONS.gradcap,
-            text: eduLabel,
-            title: "Education"
-          }));
-        } else {
-          // eduRow.appendChild(buildBubble({
-          //   icon: ICONS.gradcap,
-          //   text: "Education unknown",
-          //   title: "Education"
-          // }));
-          // eduRow.firstChild.style.opacity = ".7";
-        }
-
-        const skillsRow = document.createElement("div");
-        skillsRow.className = "tagRow";
-
-        const skills = Array.isArray(payload.skills) ? payload.skills.filter(Boolean).map(s => String(s)) : [];
-        const previewCount = 8;
-
-        const previewSkills = skills.slice(0, previewCount);
-        previewSkills.forEach(sk => skillsRow.appendChild(buildSkillBubble(sk)));
-
-        const moreHint = document.createElement("div");
-        moreHint.className = "moreHint";
-
-        if (skills.length > previewCount){
-          moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
-        } else if (skills.length === 0){
-          moreHint.textContent = "No skills listed.";
-          moreHint.style.opacity = ".75";
-        } else {
-          moreHint.textContent = "Expand for full details.";
-          moreHint.style.opacity = ".75";
-        }
-
-        // When expanded, swap skill list to full
-        const fullSkillsRow = document.createElement("div");
-        fullSkillsRow.className = "tagRow";
-        fullSkillsRow.style.display = "none";
-        skills.forEach(sk => fullSkillsRow.appendChild(buildSkillBubble(sk)));
-
-        // Observe expanded class toggle (cheap + simple)
-        const mo = new MutationObserver(() => {
-          const expanded = rowWrap.classList.contains("expanded");
-          if (expanded){
-            skillsRow.style.display = "none";
-            fullSkillsRow.style.display = "flex";
-            if (skills.length > previewCount) moreHint.textContent = `${skills.length} skills`;
-          } else {
-            skillsRow.style.display = "flex";
-            fullSkillsRow.style.display = "none";
-            if (skills.length > previewCount) moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
-            else if (skills.length === 0) moreHint.textContent = "No skills listed.";
-            else moreHint.textContent = "Expand for full details.";
-          }
-        });
-        mo.observe(rowWrap, { attributes:true, attributeFilter:["class"] });
-
-        tagPanel.appendChild(eduRow);
-        tagPanel.appendChild(skillsRow);
-        tagPanel.appendChild(fullSkillsRow);
-        tagPanel.appendChild(moreHint);
-
-        detailsGrid.appendChild(aiCard);
-        detailsGrid.appendChild(tagPanel);
-
-        details.appendChild(detailsGrid);
-
-        rowWrap.appendChild(row);
-        rowWrap.appendChild(details);
-        rowsEl.appendChild(rowWrap);
-      });
-    }
-
-    // ====== Search behavior (UPDATED FOR NEW API FORMAT) ======
-    async function runSearch(prompt){
-      clearError();
-      goBtn.disabled = true;
-      goBtn.textContent = "Searching…";
-      document.getElementById("demo-vid").style.display = "none";
-
-      try{
-        const firebase_uid = null; // if you have auth later
-        const token = window.auth.currentUser ? await window.auth.currentUser.getIdToken() : null;
-
-        const res = await fetch("https://web-production-79f4.up.railway.app/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { "Authorization": `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({ prompt })
-        });
-
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok){
-          const code = data.error || "ERROR";
-          const msg = data.message || "Search failed.";
-          if (code == "anon_search_limit_reached"){
-            document.getElementById("signin-modal").style.display = "flex"
-          }
-          else{
-            showError(msg);
-            setResultsMode(true);
-            renderRows([]);
-            resultCountEl.textContent = "0 results";
-          }
+      function renderRows(items) {
+        rowsEl.innerHTML = "";
+        if (!items || items.length === 0) {
+          emptyEl.style.display = "block";
           return;
         }
+        emptyEl.style.display = "none";
 
-        // New response shape:
-        // { count: number, prompt: string, results: [{id, payload, score}, ...] }
-        const results = Array.isArray(data.results) ? data.results : [];
-        const count = (typeof data.count === "number") ? data.count : results.length;
+        items.forEach((item, idx) => {
+          const payload = item && item.payload ? item.payload : {};
+          const name =
+            safeText(
+              payload.name ||
+                (payload.first_name && payload.last_name
+                  ? `${payload.first_name} ${payload.last_name}`
+                  : "") ||
+                "Unknown",
+            ).trim() || "Unknown";
+          const city = safeText(payload.city || "").trim();
+          const company = safeText(payload.current_company_name || "").trim();
+          const subtitle = [company, city].filter(Boolean).join(" • ");
 
-        setResultsMode(true);
+          const rowWrap = document.createElement("div");
+          rowWrap.className = "rowWrap";
 
-        resultCountEl.textContent = `${count} results`;
-        authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
+          // If first item, expand it by default
+          if (idx === 0) {
+            rowWrap.classList.add("expanded");
+          }
 
-        renderRows(results);
+          // Main row
+          const row = document.createElement("div");
+          row.className = "row";
+          row.tabIndex = 0;
+          row.setAttribute("role", "button");
+          //row.setAttribute("aria-expanded", idx === 0 ? "true" : "false");
+          row.title = "Click to expand";
 
-      } catch (err){
-        console.log(err)
-        setResultsMode(true);
-        renderRows([]);
-        resultCountEl.textContent = "0 results";
-        showError("Network error. Check your backend URL / CORS.");
-      } finally {
-        goBtn.disabled = false;
-        goBtn.innerHTML = `
+          function toggle() {
+            const on = !rowWrap.classList.contains("expanded");
+            // collapse others (optional, feels cleaner)
+            document.querySelectorAll(".rowWrap.expanded").forEach((el) => {
+              if (el !== rowWrap) {
+                el.classList.remove("expanded");
+                const r = el.querySelector(".row");
+                if (r) r.setAttribute("aria-expanded", "false");
+              }
+            });
+            rowWrap.classList.toggle("expanded", on);
+            row.setAttribute("aria-expanded", on ? "true" : "false");
+          }
+
+          row.addEventListener("click", toggle);
+          row.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggle();
+            }
+          });
+
+          // round + avatar
+          const round = document.createElement("div");
+          round.className = "cell round";
+
+          const pfp = document.createElement("div");
+          pfp.className = "pfp";
+          const img = document.createElement("img");
+          img.alt = name + " profile photo";
+          img.loading = "lazy";
+          img.src = safeText(payload.avatar || "");
+          img.onerror = () => {
+            img.remove();
+          };
+          pfp.appendChild(img);
+          round.appendChild(pfp);
+
+          // name + subtitle
+          const nameCell = document.createElement("div");
+          nameCell.className = "cell nameCol";
+          const nm = document.createElement("div");
+          nm.className = "personName";
+          nm.textContent = name;
+
+          const ds = document.createElement("div");
+          ds.className = "desc";
+          ds.textContent = subtitle || "";
+
+          nameCell.appendChild(nm);
+          nameCell.appendChild(ds);
+
+          // socials
+          const socials = document.createElement("div");
+          socials.className = "cell socials";
+
+          const linkedin = safeText(payload.linkedin_url || "").trim();
+          if (linkedin) {
+            socials.appendChild(
+              buildChip({
+                kind: "linkedin",
+                label: "@" + handleFromUrl(linkedin, "linkedin.com"),
+                href: normalizeUrl(linkedin),
+              }),
+            );
+          }
+
+          const instagram = safeText(payload.instagram_url || "").trim();
+          if (instagram) {
+            socials.appendChild(
+              buildChip({
+                kind: "instagram",
+                label: "@" + handleFromUrl(instagram, "instagram.com"),
+                href: normalizeUrl(instagram),
+              }),
+            );
+          }
+
+          const github = safeText(payload.github_url || "").trim();
+          if (github) {
+            const h = handleFromUrl(github, "github.com");
+            socials.appendChild(
+              buildChip({
+                kind: "github",
+                label: h ? "@" + h.replace(/^@/, "") : "GitHub",
+                href: normalizeUrl(github),
+              }),
+            );
+          }
+
+          const scholar = safeText(payload.google_scholar_url || "").trim();
+          if (scholar) {
+            socials.appendChild(
+              buildChip({
+                kind: "scholar",
+                label: "Scholar",
+                href: normalizeUrl(scholar),
+              }),
+            );
+          }
+
+          const site = safeText(payload.personal_site_url || "").trim();
+          if (site) {
+            socials.appendChild(
+              buildChip({
+                kind: "site",
+                label: "Site",
+                href: normalizeUrl(site),
+              }),
+            );
+          }
+
+          const twitter = safeText(payload.twitter_url || "").trim();
+          if (twitter) {
+            socials.appendChild(
+              buildChip({
+                kind: "twitter",
+                label: "@" + handleFromUrl(twitter, "x.com").replace(/^@/, ""),
+                href: normalizeUrl(twitter),
+              }),
+            );
+          }
+
+          // function normalizeYouTubeHandle(url) {
+          //     const match = url.match(/^https?:\/\/(www\.)?youtube\.com\/([^/?#]+)/i);
+          //     if (!match) return url;
+          //
+          //     const username = match[2];
+          //
+          //     // already a handle
+          //     if (username.startsWith("@")) return url;
+          //
+          //     return `https://www.youtube.com/@${username}`;
+          //   }
+
+          const youtube = safeText(payload.youtube_url || "").trim();
+          if (youtube) {
+            socials.appendChild(
+              buildChip({
+                kind: "youtube",
+                label: "YouTube",
+                href: normalizeUrl(youtube),
+              }),
+            );
+          }
+
+          const tiktok = safeText(payload.tiktok_url || "").trim();
+          if (tiktok) {
+            socials.appendChild(
+              buildChip({
+                kind: "tiktok",
+                label: "TikTok",
+                href: normalizeUrl(tiktok),
+              }),
+            );
+          }
+
+          if (!socials.childNodes.length) {
+            const s = document.createElement("span");
+            s.style.color = "rgba(255,255,255,.35)";
+            s.style.fontSize = "13px";
+            s.textContent = "";
+            socials.appendChild(s);
+          }
+
+          // resume
+          const resume = document.createElement("div");
+          resume.className = "cell resume";
+          const resumeUrl = safeText(payload.resume_url || "").trim();
+          if (resumeUrl) {
+            const a = document.createElement("a");
+            a.href = normalizeUrl(resumeUrl);
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.innerHTML = `${ICONS.doc}<span>Resume</span>`;
+            a.addEventListener("click", stopRowToggle);
+            resume.appendChild(a);
+          } else {
+            resume.style.color = "rgba(255,255,255,.35)";
+            resume.style.fontSize = "13px";
+            resume.textContent = "";
+          }
+
+          // contact
+          const contact = document.createElement("div");
+          contact.className = "cell contact";
+
+          // New API sometimes gives boolean flags `contact_url: true`, `email: true`
+          const contactUrl = payload.contact_url;
+          const email = payload.email;
+
+          const contactUrlString =
+            typeof contactUrl === "string" ? contactUrl.trim() : "";
+          const canContact =
+            !!contactUrlString || contactUrl === true || email === true;
+
+          if (contactUrlString) {
+            const a = document.createElement("a");
+            a.href = normalizeUrl(contactUrlString);
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = "Contact";
+            a.addEventListener("click", stopRowToggle);
+            contact.appendChild(a);
+          } else if (canContact) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = "Contact";
+            btn.title =
+              "Contact is available, but no direct link was provided by the API.";
+
+            btn.addEventListener("click", (e) => {
+              stopRowToggle(e);
+              document.getElementById("signin-modal").style.display = "flex";
+            });
+            contact.appendChild(btn);
+          } else {
+            const s = document.createElement("span");
+            s.style.color = "rgba(255,255,255,.35)";
+            s.style.fontSize = "13px";
+            s.textContent = "";
+            contact.appendChild(s);
+          }
+
+          row.appendChild(round);
+          row.appendChild(nameCell);
+          row.appendChild(socials);
+          row.appendChild(resume);
+          row.appendChild(contact);
+
+          // Details area
+          const details = document.createElement("div");
+          details.className = "details";
+
+          const detailsGrid = document.createElement("div");
+          detailsGrid.className = "detailsGrid";
+
+          // AI short description card
+          const aiCard = document.createElement("div");
+          aiCard.className = "aiCard";
+
+          const aiTitle = document.createElement("div");
+          aiTitle.className = "aiTitle";
+          aiTitle.innerHTML = `<span>AI Summary</span>`;
+
+          const aiText = document.createElement("p");
+          aiText.className = "aiText";
+          aiText.textContent =
+            safeText(payload.ai_short_description || "").trim() || "";
+
+          aiCard.appendChild(aiTitle);
+          aiCard.appendChild(aiText);
+
+          // Tag panel: education + skills
+          const tagPanel = document.createElement("div");
+          tagPanel.className = "tagPanel";
+
+          const eduLabel = parseEducationLabel(payload);
+          const eduRow = document.createElement("div");
+          eduRow.className = "tagRow";
+          if (eduLabel) {
+            eduRow.appendChild(
+              buildBubble({
+                icon: ICONS.gradcap,
+                text: eduLabel,
+                title: "Education",
+              }),
+            );
+          } else {
+            // eduRow.appendChild(buildBubble({
+            //   icon: ICONS.gradcap,
+            //   text: "Education unknown",
+            //   title: "Education"
+            // }));
+            // eduRow.firstChild.style.opacity = ".7";
+          }
+
+          const skillsRow = document.createElement("div");
+          skillsRow.className = "tagRow";
+
+          const skills = Array.isArray(payload.skills)
+            ? payload.skills.filter(Boolean).map((s) => String(s))
+            : [];
+          const previewCount = 8;
+
+          const previewSkills = skills.slice(0, previewCount);
+          previewSkills.forEach((sk) =>
+            skillsRow.appendChild(buildSkillBubble(sk)),
+          );
+
+          const moreHint = document.createElement("div");
+          moreHint.className = "moreHint";
+
+          if (skills.length > previewCount) {
+            moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
+          } else if (skills.length === 0) {
+            moreHint.textContent = "No skills listed.";
+            moreHint.style.opacity = ".75";
+          } else {
+            moreHint.textContent = "Expand for full details.";
+            moreHint.style.opacity = ".75";
+          }
+
+          // When expanded, swap skill list to full
+          const fullSkillsRow = document.createElement("div");
+          fullSkillsRow.className = "tagRow";
+          fullSkillsRow.style.display = "none";
+          skills.forEach((sk) =>
+            fullSkillsRow.appendChild(buildSkillBubble(sk)),
+          );
+
+          // Observe expanded class toggle (cheap + simple)
+          const mo = new MutationObserver(() => {
+            const expanded = rowWrap.classList.contains("expanded");
+            if (expanded) {
+              skillsRow.style.display = "none";
+              fullSkillsRow.style.display = "flex";
+              if (skills.length > previewCount)
+                moreHint.textContent = `${skills.length} skills`;
+            } else {
+              skillsRow.style.display = "flex";
+              fullSkillsRow.style.display = "none";
+              if (skills.length > previewCount)
+                moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
+              else if (skills.length === 0)
+                moreHint.textContent = "No skills listed.";
+              else moreHint.textContent = "Expand for full details.";
+            }
+          });
+          mo.observe(rowWrap, { attributes: true, attributeFilter: ["class"] });
+
+          tagPanel.appendChild(eduRow);
+          tagPanel.appendChild(skillsRow);
+          tagPanel.appendChild(fullSkillsRow);
+          tagPanel.appendChild(moreHint);
+
+          detailsGrid.appendChild(aiCard);
+          detailsGrid.appendChild(tagPanel);
+
+          details.appendChild(detailsGrid);
+
+          rowWrap.appendChild(row);
+          rowWrap.appendChild(details);
+          rowsEl.appendChild(rowWrap);
+        });
+      }
+
+      // ====== Search behavior (UPDATED FOR NEW API FORMAT) ======
+      async function runSearch(prompt) {
+        clearError();
+        goBtn.disabled = true;
+        goBtn.textContent = "Searching…";
+        document.getElementById("demo-vid").style.display = "none";
+
+        try {
+          const firebase_uid = null; // if you have auth later
+          const token = window.auth.currentUser
+            ? await window.auth.currentUser.getIdToken()
+            : null;
+
+          const res = await fetch(
+            "https://web-production-79f4.up.railway.app/search",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ prompt }),
+            },
+          );
+
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            const code = data.error || "ERROR";
+            const msg = data.message || "Search failed.";
+            if (code == "anon_search_limit_reached") {
+              document.getElementById("signin-modal").style.display = "flex";
+            } else {
+              showError(msg);
+              setResultsMode(true);
+              renderRows([]);
+              resultCountEl.textContent = "0 results";
+            }
+            return;
+          }
+
+          // New response shape:
+          // { count: number, prompt: string, results: [{id, payload, score}, ...] }
+          const results = Array.isArray(data.results) ? data.results : [];
+          const count =
+            typeof data.count === "number" ? data.count : results.length;
+
+          setResultsMode(true);
+
+          resultCountEl.textContent = `${count} results`;
+          authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
+
+          renderRows(results);
+        } catch (err) {
+          console.log(err);
+          setResultsMode(true);
+          renderRows([]);
+          resultCountEl.textContent = "0 results";
+          showError("Network error. Check your backend URL / CORS.");
+        } finally {
+          goBtn.disabled = false;
+          goBtn.innerHTML = `
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
   <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
         stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M16.5 16.5 21 21"
         stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
+        }
       }
-    }
 
-    // Submit handler (no page navigation)
-    const form = document.getElementById("searchForm");
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const q = input.value.trim();
-      if (!q) return;
-      runSearch(q);
-    });
+      // Submit handler (no page navigation)
+      const form = document.getElementById("searchForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const q = input.value.trim();
+        if (!q) return;
+        runSearch(q);
+      });
 
-    // Support /?q=...
-    const params = new URLSearchParams(location.search);
-    const qParam = params.get("q");
-    if (qParam){
-      input.value = qParam;
-      runSearch(qParam);
-    }
-
-
-
-
-  </script>
-</body>
+      // Support /?q=...
+      const params = new URLSearchParams(location.search);
+      const qParam = params.get("q");
+      if (qParam) {
+        input.value = qParam;
+        runSearch(qParam);
+      }
+    </script>
+  </body>
 </html>
