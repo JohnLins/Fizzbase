@@ -752,11 +752,90 @@ body.results .resultsWrap {
   .head {
     display: none;
   }
+
+  /* Use a compact 3-column layout on narrow screens so chevron, avatar
+     and main content align cleanly and don't stack awkwardly. */
   .row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 36px 56px 1fr;
     gap: 10px;
-    padding: 14px;
+    padding: 10px;
+    align-items: center;
   }
+
+  .chevron {
+    width: 24px;
+    height: 24px;
+  }
+
+  .pfp {
+    width: 42px;
+    height: 42px;
+  }
+
+  .personName {
+    font-size: 15px;
+  }
+
+  .desc {
+    color: rgba(255, 255, 255, 0.56);
+    font-size: 12px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Make chips/bubbles smaller and allow wrapping */
+  .tagPanel {
+    gap: 8px;
+  }
+  .tagRow {
+    gap: 6px;
+  }
+  .bubble {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .bubble .btxt {
+    max-width: 160px;
+  }
+
+  /* Social icons should stay horizontal and scroll if necessary */
+  .socials {
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chip {
+    flex: 0 0 auto;
+  }
+
+  /* Keep resume/contact visible but compact on mobile and place on their
+     own full-width row so they don't overlap socials. Align left and keep
+     both items on the same line with a small gap. */
+  .resume,
+  .contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    grid-column: 1 / -1; /* span full width */
+    justify-content: flex-start; /* align left */
+    margin-top: 8px;
+  }
+  .resume {
+    margin-right: 10px; /* spacing between resume and contact */
+  }
+  .resume a,
+  .contact a,
+  .contact button {
+    padding: 6px 8px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+
   .round {
     justify-content: flex-start;
   }
@@ -764,7 +843,7 @@ body.results .resultsWrap {
     justify-content: flex-start;
   }
   .resume span {
-    max-width: 240px;
+    max-width: 180px;
   }
 }
 
