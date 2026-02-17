@@ -325,6 +325,7 @@ body.results .resultsWrap {
 .head {
   display: grid;
   grid-template-columns:
+    28px /* chevron */
     72px /* avatar */
     220px /* name */
     minmax(380px, 1fr) /* socials */
@@ -352,6 +353,7 @@ body.results .resultsWrap {
 .row {
   display: grid;
   grid-template-columns:
+    28px /* chevron */
     72px
     220px
     minmax(380px, 1fr)
@@ -359,9 +361,8 @@ body.results .resultsWrap {
     130px;
   gap: 0;
   align-items: center;
+
   padding: 12px 14px;
-  position: relative; /* needed for overlay/indicator */
-  padding-right: 60px; /* give space for the indicator */
   transition: background 0.18s ease;
   cursor: pointer;
   user-select: none;
@@ -374,55 +375,23 @@ body.results .resultsWrap {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
-/* Soft fade on the right to indicate more content */
-.row::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 80px;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(11,11,12,0) 0%, rgba(11,11,12,0.7) 100%);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-/* Non-textual chevron indicator (SVG data URI) */
-.row::after {
-  content: "";
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" stroke="rgba(255,255,255,0.88)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.96;
-  pointer-events: none;
-  transition: transform 0.18s ease, opacity 0.18s ease;
-}
-
-/* Subtle hide the fade/indicator on hover to suggest interaction */
-.row:hover::before {
-  opacity: 0;
-  transform: translateX(6px);
-}
-.row:hover::after {
-  transform: translateY(-50%) translateX(2px) scale(1.03);
-}
-
-/* When expanded, flip the chevron and remove the fade */
-.rowWrap.expanded .row::after {
-  transform: translateY(-50%) rotate(180deg);
-}
-.rowWrap.expanded .row::before {
-  opacity: 0;
-}
-
 .cell {
   min-width: 0;
+}
+
+.chevron {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.18s ease;
+}
+
+.rowWrap.expanded .chevron {
+  transform: rotate(90deg);
 }
 
 /* round column */
@@ -720,6 +689,20 @@ body.results .resultsWrap {
   font-weight: 600;
 }
 
+.bubble.experience {
+  background: rgba(59, 130, 246, 0.18); /* blue-500 */
+  border-color: rgba(59, 130, 246, 0.35);
+  color: white;
+  font-weight: 500;
+}
+
+.bubble.level {
+  background: rgba(168, 85, 247, 0.18); /* purple-500 */
+  border-color: rgba(168, 85, 247, 0.35);
+  color: white;
+  font-weight: 500;
+}
+
 .moreHint {
   color: rgba(255, 255, 255, 0.55);
   font-size: 12px;
@@ -751,11 +734,8 @@ body.results .resultsWrap {
   .head,
   .row {
     grid-template-columns:
-      72px
-      minmax(160px, 240px)
-      minmax(260px, 1fr)
-      max-content
-      130px;
+      72px minmax(160px, 240px) minmax(260px, 1fr)
+      max-content 130px;
   }
   .resume span {
     max-width: 150px;
@@ -880,4 +860,24 @@ body.results .resultsWrap {
     transform 0.12s ease,
     filter 0.12s ease,
     background 0.12s ease;
+}
+
+.pill {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+
+  /* very subtle gradient */
+  background: linear-gradient(
+    135deg,
+    rgba(120, 119, 198, 0.15),
+    rgba(0, 212, 255, 0.12),
+    rgba(168, 85, 247, 0.15)
+  );
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
 }

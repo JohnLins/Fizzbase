@@ -194,11 +194,11 @@
 
         <div class="table" id="table">
           <div class="head">
-            <div class="cell">Round</div>
-            <div class="cell">Name</div>
-            <div class="cell">Social</div>
-            <div class="cell">Resume</div>
-            <div class="cell" style="text-align: right">Contact</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell" style="text-align: right"></div>
           </div>
 
           <div id="rows"></div>
@@ -260,7 +260,7 @@
       const rowsEl = document.getElementById("rows");
       const emptyEl = document.getElementById("empty");
       const resultCountEl = document.getElementById("resultCount");
-      const authPillEl = document.getElementById("authPill");
+      //const authPillEl = document.getElementById("authPill");
 
       function showError(msg) {
         errorBox.textContent = msg;
@@ -345,6 +345,51 @@
         }
       }
 
+      function getEducationLevel(payload) {
+        const level = payload.education_level;
+        if (!level) return null;
+        const num = parseInt(level, 10);
+        const levels = {
+          1: "HS",
+          2: "Bachelor's",
+          3: "Master's",
+          4: "PhD",
+          5: "PostDoc",
+        };
+        return levels[num] || null;
+      }
+
+      function getExperienceLevel(payload) {
+        const level = payload.experience_level;
+        if (!level) return null;
+        const num = parseInt(level, 10);
+        const levels = {
+          1: "Student",
+          2: "New grad",
+          3: "Junior",
+          4: "Senior",
+          5: "Staff",
+          6: "Distinguished",
+        };
+        return levels[num] || null;
+      }
+
+      function getWorkExperience(payload) {
+        const raw = payload.work_experience || payload.experience;
+        if (!raw) return [];
+        try {
+          const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
+          if (!Array.isArray(arr)) return [];
+          return arr.map((item) => {
+            const company = safeText(item.company || item.company_name || "");
+            const title = safeText(item.title || item.job_title || "");
+            return { company, title };
+          });
+        } catch {
+          return [];
+        }
+      }
+
       function buildChip({ kind, label, href }) {
         const a = document.createElement("a");
         a.className = `chip ${kind}`;
@@ -371,11 +416,14 @@
         }
       }
 
-      function buildBubble({ icon, text, title }) {
+      function buildBubble({ icon, text, title, className }) {
         const b = document.createElement("div");
-        b.className = "bubble";
-        if (title == "Education") {
+        if (className) {
+          b.className = `bubble ${className}`;
+        } else if (title == "Education") {
           b.className = "bubble education";
+        } else {
+          b.className = "bubble";
         }
         if (title) b.title = title;
         b.innerHTML = `${icon || ""}<span class="btxt">${text}</span>`;
@@ -456,6 +504,11 @@
             }
           });
 
+          // chevron
+          const chevron = document.createElement("div");
+          chevron.className = "chevron";
+          chevron.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+
           // round + avatar
           const round = document.createElement("div");
           round.className = "cell round";
@@ -485,6 +538,10 @@
 
           nameCell.appendChild(nm);
           nameCell.appendChild(ds);
+
+          row.appendChild(chevron);
+          row.appendChild(round);
+          row.appendChild(nameCell);
 
           // socials
           const socials = document.createElement("div");
@@ -658,8 +715,6 @@
             contact.appendChild(s);
           }
 
-          row.appendChild(round);
-          row.appendChild(nameCell);
           row.appendChild(socials);
           row.appendChild(resume);
           row.appendChild(contact);
@@ -692,24 +747,58 @@
           tagPanel.className = "tagPanel";
 
           const eduLabel = parseEducationLabel(payload);
+          const eduLevel = getEducationLevel(payload);
           const eduRow = document.createElement("div");
           eduRow.className = "tagRow";
-          if (eduLabel) {
+          if (eduLabel || eduLevel) {
+            const displayText =
+              eduLabel && eduLevel
+                ? `${eduLabel}⋅${eduLevel}`
+                : eduLabel || eduLevel;
             eduRow.appendChild(
               buildBubble({
                 icon: ICONS.gradcap,
-                text: eduLabel,
+                text: displayText,
                 title: "Education",
               }),
             );
-          } else {
-            // eduRow.appendChild(buildBubble({
-            //   icon: ICONS.gradcap,
-            //   text: "Education unknown",
-            //   title: "Education"
-            // }));
-            // eduRow.firstChild.style.opacity = ".7";
           }
+
+          // Experience level bubble
+          const expLevel = getExperienceLevel(payload);
+          if (expLevel) {
+            eduRow.appendChild(
+              buildBubble({
+                icon: null,
+                text: expLevel,
+                title: "Experience Level",
+                className: "level",
+              }),
+            );
+          }
+
+          // Work experience bubbles
+          const workExp = getWorkExperience(payload);
+          const workExpRow = document.createElement("div");
+          workExpRow.className = "tagRow";
+          workExp.forEach((exp) => {
+            if (exp.company.includes("*") || exp.title.includes("*")) return; // filter out redacted entries from new API
+
+            const text =
+              exp.company && exp.title && exp.company !== exp.title
+                ? `${exp.company}, ${exp.title}`
+                : exp.company || exp.title || "";
+            if (text) {
+              workExpRow.appendChild(
+                buildBubble({
+                  icon: null,
+                  text: text,
+                  title: "Work Experience",
+                  className: "experience",
+                }),
+              );
+            }
+          });
 
           const skillsRow = document.createElement("div");
           skillsRow.className = "tagRow";
@@ -766,6 +855,9 @@
           mo.observe(rowWrap, { attributes: true, attributeFilter: ["class"] });
 
           tagPanel.appendChild(eduRow);
+          if (workExpRow.children.length > 0) {
+            tagPanel.appendChild(workExpRow);
+          }
           tagPanel.appendChild(skillsRow);
           tagPanel.appendChild(fullSkillsRow);
           tagPanel.appendChild(moreHint);
@@ -831,7 +923,7 @@
           setResultsMode(true);
 
           resultCountEl.textContent = `${count} results`;
-          authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
+          //authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
 
           renderRows(results);
         } catch (err) {
