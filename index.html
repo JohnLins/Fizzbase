@@ -187,11 +187,6 @@
 
       <!-- Results -->
       <section class="resultsWrap" id="resultsWrap" aria-live="polite">
-        <div class="metaRow">
-          <div class="pill" id="resultCount">0 results</div>
-          <div class="pill" id="authPill">AI Search</div>
-        </div>
-
         <div class="table" id="table">
           <div class="head">
             <div class="cell"></div>
@@ -259,7 +254,6 @@
       const errorBox = document.getElementById("errorBox");
       const rowsEl = document.getElementById("rows");
       const emptyEl = document.getElementById("empty");
-      const resultCountEl = document.getElementById("resultCount");
       //const authPillEl = document.getElementById("authPill");
 
       function showError(msg) {
@@ -909,7 +903,6 @@
               showError(msg);
               setResultsMode(true);
               renderRows([]);
-              resultCountEl.textContent = "0 results";
             }
             return;
           }
@@ -922,7 +915,6 @@
 
           setResultsMode(true);
 
-          resultCountEl.textContent = `${count} results`;
           //authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
 
           renderRows(results);
@@ -930,7 +922,6 @@
           console.log(err);
           setResultsMode(true);
           renderRows([]);
-          resultCountEl.textContent = "0 results";
           showError("Network error. Check your backend URL / CORS.");
         } finally {
           goBtn.disabled = false;

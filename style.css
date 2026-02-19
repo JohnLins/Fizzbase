@@ -289,29 +289,6 @@ body.results .resultsWrap {
   pointer-events: auto;
 }
 
-.metaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 10px 2px 12px;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 13px;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border2);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
 .table {
   border: 1px solid var(--border2);
   border-radius: 18px;
