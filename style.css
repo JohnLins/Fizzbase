@@ -283,10 +283,29 @@ input::placeholder {
     transform 0.45s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
-body.results .resultsWrap {
+body.results .resultsWrap,
+body.seo-page .resultsWrap {
   opacity: 1;
   transform: translateY(0px);
   pointer-events: auto;
+}
+
+/* SEO landing pages: ensure article text is visible and readable */
+.seoSection {
+  color: var(--text);
+}
+.seoSection p,
+.seoSection li {
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+.seoSection ul {
+  margin: 0.5rem 0 1rem 1.25rem;
+  padding: 0;
+}
+.seoSection strong {
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .table {
