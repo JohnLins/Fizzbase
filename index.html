@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Fizzbase — San Francisco People Search</title>
+    <link rel="canonical" href="https://fizzbase.com/" />
     <meta
       name="description"
       content="Fizzbase is an AI search platform that indexed every person in the Bay Area and mapped how they’re connected."
@@ -881,7 +882,8 @@
             : null;
 
           const res = await fetch(
-            "https://web-production-79f4.up.railway.app/search",
+            //"https://web-production-79f4.up.railway.app/search",
+            "http://localhost:8080/search",
             {
               method: "POST",
               headers: {
