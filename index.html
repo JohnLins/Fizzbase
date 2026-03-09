@@ -276,6 +276,7 @@
       const rowsEl = document.getElementById("rows");
       const emptyEl = document.getElementById("empty");
       //const authPillEl = document.getElementById("authPill");
+      let lastSearchPrompt = "";
 
       function showError(msg) {
         errorBox.textContent = msg;
@@ -323,6 +324,21 @@
         gradcap: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path fill="currentColor" d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm0 14L4.2 12.8 3 13.45 12 18l9-4.55-1.2-.65L12 17Z"/>
       </svg>`,
+        calendar: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path fill="currentColor" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2Zm0 16H5V10h14v10Zm0-12H5V6h14v2Z"/>
+      </svg>`,
+        level: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path fill="currentColor" d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/>
+      </svg>`,
+        briefcase: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path fill="currentColor" d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 0h-4V4h4v2z"/>
+      </svg>`,
+        clock: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm1-13h-2v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+      </svg>`,
+        diploma: `<svg class="icon" viewBox="4 4 16 16" fill="none" aria-hidden="true">
+        <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12 5a5 5 0 0 0-5 5c0 1.6.75 3.03 1.91 3.95l.54 2.73c.06.31.43.43.66.21L12 15.6l1.89 1.29c.23.22.6.1.66-.21l.54-2.73A4.98 4.98 0 0 0 17 10a5 5 0 0 0-5-5zm0 2.15.76 1.54 1.7.25-1.23 1.2.29 1.69L12 10.99l-1.52.8.29-1.69-1.23-1.2 1.7-.25L12 7.15z"/>
+      </svg>`,
       };
 
       function normalizeUrl(url) {
@@ -363,34 +379,32 @@
       function getEducationLevel(payload) {
         const level = payload.education_level;
         if (!level) return null;
-        const num = parseInt(level, 10);
-        const levels = {
-          1: "HS",
-          2: "Bachelor's",
-          3: "Master's",
-          4: "PhD",
-          5: "PostDoc",
-        };
-        return levels[num] || null;
+        if (typeof level === "number") return null;
+        const s = String(level).toLowerCase().trim();
+        
+        return s.charAt(0).toUpperCase() + s.slice(1);
       }
 
       function getExperienceLevel(payload) {
         const level = payload.experience_level;
         if (!level) return null;
-        const num = parseInt(level, 10);
-        const levels = {
-          1: "Student",
-          2: "New grad",
-          3: "Junior",
-          4: "Senior",
-          5: "Staff",
-          6: "Distinguished",
-        };
-        return levels[num] || null;
+        
+        const s = String(level).toLowerCase().trim();
+        
+        return s.charAt(0).toUpperCase() + s.slice(1) + " Level";
+      }
+
+      function getGraduationLabel(payload) {
+        const year = payload.graduation_year;
+        if (year == null || year === "") return null;
+        const y = parseInt(year, 10);
+        if (isNaN(y)) return null;
+        const currentYear = new Date().getFullYear();
+        return y > currentYear ? `Graduating ${y}` : `Graduated ${y}`;
       }
 
       function getWorkExperience(payload) {
-        const raw = payload.work_experience || payload.experience;
+        const raw = payload.full_experience;
         if (!raw) return [];
         try {
           const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -411,6 +425,8 @@
         a.href = href;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
+        a.title = label;
+        a.setAttribute("aria-label", label);
         a.innerHTML = `${ICONS[kind] || ""}<span class="handle">${label}</span>`;
         a.addEventListener("click", stopRowToggle);
         return a;
@@ -483,6 +499,7 @@
 
           const rowWrap = document.createElement("div");
           rowWrap.className = "rowWrap";
+          rowWrap.dataset.profileId = item.id || "";
 
           // If first item, expand it by default
           if (idx === 0) {
@@ -530,14 +547,28 @@
 
           const pfp = document.createElement("div");
           pfp.className = "pfp";
-          const img = document.createElement("img");
-          img.alt = name + " profile photo";
-          img.loading = "lazy";
-          img.src = safeText(payload.avatar || "");
-          img.onerror = () => {
-            img.remove();
+          const avatarUrl = safeText(payload.avatar || "").trim();
+          const defaultSvg = () => {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("aria-hidden", "true");
+            svg.classList.add("pfp-placeholder");
+            svg.innerHTML = "<path d=\"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\"/>";
+            return svg;
           };
-          pfp.appendChild(img);
+          if (avatarUrl) {
+            const img = document.createElement("img");
+            img.alt = name + " profile photo";
+            img.loading = "lazy";
+            img.src = avatarUrl;
+            img.onerror = () => {
+              img.remove();
+              pfp.appendChild(defaultSvg());
+            };
+            pfp.appendChild(img);
+          } else {
+            pfp.appendChild(defaultSvg());
+          }
           round.appendChild(pfp);
 
           // name + subtitle
@@ -623,7 +654,7 @@
             socials.appendChild(
               buildChip({
                 kind: "twitter",
-                label: "@" + handleFromUrl(twitter, "x.com").replace(/^@/, ""),
+                label: "@" + handleFromUrl(twitter).replace(/^@/, ""),
                 href: normalizeUrl(twitter),
               }),
             );
@@ -747,7 +778,7 @@
 
           const aiTitle = document.createElement("div");
           aiTitle.className = "aiTitle";
-          aiTitle.innerHTML = `<span>AI Summary</span>`;
+          aiTitle.innerHTML = `<span class="gradient-text">✦ AI Summary</span>`;
 
           const aiText = document.createElement("p");
           aiText.className = "aiText";
@@ -757,34 +788,50 @@
           aiCard.appendChild(aiTitle);
           aiCard.appendChild(aiText);
 
-          // Tag panel: education + skills
+          // Single continuous row of bubbles (education, work exp, skills)
           const tagPanel = document.createElement("div");
           tagPanel.className = "tagPanel";
 
+          const bubblesRow = document.createElement("div");
+          bubblesRow.className = "tagRow";
+
           const eduLabel = parseEducationLabel(payload);
           const eduLevel = getEducationLevel(payload);
-          const eduRow = document.createElement("div");
-          eduRow.className = "tagRow";
-          if (eduLabel || eduLevel) {
-            const displayText =
-              eduLabel && eduLevel
-                ? `${eduLabel}⋅${eduLevel}`
-                : eduLabel || eduLevel;
-            eduRow.appendChild(
+          if (eduLabel) {
+            bubblesRow.appendChild(
               buildBubble({
                 icon: ICONS.gradcap,
-                text: displayText,
+                text: eduLabel,
                 title: "Education",
               }),
             );
           }
-
-          // Experience level bubble
+          const gradLabel = getGraduationLabel(payload);
+          if (gradLabel) {
+            bubblesRow.appendChild(
+              buildBubble({
+                icon: ICONS.calendar,
+                text: gradLabel,
+                title: "Graduation",
+                className: "education",
+              }),
+            );
+          }
+          if (eduLevel) {
+            bubblesRow.appendChild(
+              buildBubble({
+                icon: ICONS.diploma,
+                text: eduLevel,
+                title: "Education Level",
+                className: "education",
+              }),
+            );
+          }
           const expLevel = getExperienceLevel(payload);
           if (expLevel) {
-            eduRow.appendChild(
+            bubblesRow.appendChild(
               buildBubble({
-                icon: null,
+                icon: ICONS.level,
                 text: expLevel,
                 title: "Experience Level",
                 className: "level",
@@ -792,21 +839,17 @@
             );
           }
 
-          // Work experience bubbles
           const workExp = getWorkExperience(payload);
-          const workExpRow = document.createElement("div");
-          workExpRow.className = "tagRow";
           workExp.forEach((exp) => {
-            if (exp.company.includes("*") || exp.title.includes("*")) return; // filter out redacted entries from new API
-
+            if (exp.company.includes("*") || exp.title.includes("*")) return;
             const text =
               exp.company && exp.title && exp.company !== exp.title
                 ? `${exp.company}, ${exp.title}`
                 : exp.company || exp.title || "";
             if (text) {
-              workExpRow.appendChild(
+              bubblesRow.appendChild(
                 buildBubble({
-                  icon: null,
+                  icon: ICONS.briefcase,
                   text: text,
                   title: "Work Experience",
                   className: "experience",
@@ -815,77 +858,139 @@
             }
           });
 
-          const skillsRow = document.createElement("div");
-          skillsRow.className = "tagRow";
+          const yearsExp = payload.years_of_experience;
+          if (yearsExp != null && yearsExp !== "" && !isNaN(Number(yearsExp))) {
+            const n = Number(yearsExp);
+            if (n > 0) {
+              bubblesRow.appendChild(
+                buildBubble({
+                  icon: ICONS.clock,
+                  text: n === 1 ? "1 yr experience" : `${n} yrs experience`,
+                  title: "Years of experience",
+                  className: "years",
+                }),
+              );
+            }
+          }
+          const yearsCompany = payload.years_at_current_company;
+          const currentCompanyName = safeText(payload.current_company_name || "").trim();
+          if (yearsCompany != null && yearsCompany !== "" && !isNaN(Number(yearsCompany))) {
+            const n = Number(yearsCompany);
+            if (n > 0) {
+              const atLabel = currentCompanyName ? currentCompanyName : "company";
+              bubblesRow.appendChild(
+                buildBubble({
+                  icon: ICONS.clock,
+                  text: n === 1 ? `1 yr at ${atLabel}` : `${n} yrs at ${atLabel}`,
+                  title: "Years at current company",
+                  className: "years",
+                }),
+              );
+            }
+          }
 
           const skills = Array.isArray(payload.skills)
             ? payload.skills.filter(Boolean).map((s) => String(s))
             : [];
           const previewCount = 8;
-
           const previewSkills = skills.slice(0, previewCount);
-          previewSkills.forEach((sk) =>
-            skillsRow.appendChild(buildSkillBubble(sk)),
-          );
+          previewSkills.forEach((sk) => bubblesRow.appendChild(buildSkillBubble(sk)));
 
-          const moreHint = document.createElement("div");
-          moreHint.className = "moreHint";
-
-          if (skills.length > previewCount) {
-            moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
-          } else if (skills.length === 0) {
-            moreHint.textContent = "No skills listed.";
-            moreHint.style.opacity = ".75";
-          } else {
-            moreHint.textContent = "Expand for full details.";
-            moreHint.style.opacity = ".75";
-          }
-
-          // When expanded, swap skill list to full
-          const fullSkillsRow = document.createElement("div");
-          fullSkillsRow.className = "tagRow";
-          fullSkillsRow.style.display = "none";
-          skills.forEach((sk) =>
-            fullSkillsRow.appendChild(buildSkillBubble(sk)),
-          );
-
-          // Observe expanded class toggle (cheap + simple)
+          // When expanded: replace preview skills with full skills; when collapsed, reverse
           const mo = new MutationObserver(() => {
             const expanded = rowWrap.classList.contains("expanded");
+            bubblesRow.querySelectorAll(".bubble.skill").forEach((el) => el.remove());
+            const skillsToShow = expanded ? skills : previewSkills;
+            skillsToShow.forEach((sk) => bubblesRow.appendChild(buildSkillBubble(sk)));
             if (expanded) {
-              skillsRow.style.display = "none";
-              fullSkillsRow.style.display = "flex";
-              if (skills.length > previewCount)
-                moreHint.textContent = `${skills.length} skills`;
-            } else {
-              skillsRow.style.display = "flex";
-              fullSkillsRow.style.display = "none";
-              if (skills.length > previewCount)
-                moreHint.textContent = `+${skills.length - previewCount} more skills (expand)`;
-              else if (skills.length === 0)
-                moreHint.textContent = "No skills listed.";
-              else moreHint.textContent = "Expand for full details.";
+              const pid = rowWrap.dataset.profileId;
+              if (pid && lastSearchPrompt && !aiText.dataset.explained) {
+                aiText.dataset.explained = "1";
+                aiText.textContent = aiText.textContent + " …";
+                streamExplain(pid, aiText);
+              }
             }
           });
           mo.observe(rowWrap, { attributes: true, attributeFilter: ["class"] });
 
-          tagPanel.appendChild(eduRow);
-          if (workExpRow.children.length > 0) {
-            tagPanel.appendChild(workExpRow);
-          }
-          tagPanel.appendChild(skillsRow);
-          tagPanel.appendChild(fullSkillsRow);
-          tagPanel.appendChild(moreHint);
+          tagPanel.appendChild(bubblesRow);
+          
 
           detailsGrid.appendChild(aiCard);
           detailsGrid.appendChild(tagPanel);
 
           details.appendChild(detailsGrid);
 
+          // Bio preview (always visible, before expand)
+          const bioLine = document.createElement("div");
+          bioLine.className = "rowBio";
+          bioLine.innerHTML =
+            `<span class="gradient-text">`+"<span style='color: lightcoral;'>✦</span> "+safeText(payload.ai_bio_description || "").trim() || "</span>";
+          bioLine.addEventListener("click", toggle);
+          bioLine.title = "Click to expand";
+
           rowWrap.appendChild(row);
+          if (bioLine.textContent) {
+            rowWrap.appendChild(bioLine);
+          }
           rowWrap.appendChild(details);
           rowsEl.appendChild(rowWrap);
+
+          // First row is expanded by default; trigger explain without waiting for observer
+          if (idx === 0 && rowWrap.classList.contains("expanded")) {
+            const pid = rowWrap.dataset.profileId;
+            if (pid && lastSearchPrompt && !aiText.dataset.explained) {
+              aiText.dataset.explained = "1";
+              aiText.textContent = aiText.textContent + " …";
+              streamExplain(pid, aiText);
+            }
+          }
         });
+      }
+
+      // ====== Explain stream (appends at end of AI summary, explanation in bold) ======
+      async function streamExplain(profileId, summaryEl) {
+        const apiBase = "https://web-production-79f4.up.railway.app";
+        const token = window.auth && window.auth.currentUser
+          ? await window.auth.currentUser.getIdToken()
+          : null;
+        const base = summaryEl.textContent.replace(/\s*…\s*$/, "").trim(); // summary without trailing "…"
+        const strongEl = document.createElement("strong");
+        summaryEl.innerHTML = "";
+        summaryEl.appendChild(document.createTextNode(base + " "));
+        summaryEl.appendChild(strongEl);
+        try {
+          const res = await fetch(`${apiBase}/explain`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              prompt: lastSearchPrompt,
+              profile_id: profileId,
+            }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data.error === "anon_search_limit_reached") {
+              document.getElementById("signin-modal").style.display = "flex";
+            }
+            //strongEl.textContent = "Could not load explanation.";
+            return;
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          //strongEl.textContent = "…";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            strongEl.textContent += decoder.decode(value, { stream: true });
+          }
+        } catch (err) {
+          console.error("Explain stream error:", err);
+          //strongEl.textContent = "Could not load explanation.";
+        }
       }
 
       // ====== Search behavior (UPDATED FOR NEW API FORMAT) ======
@@ -938,7 +1043,7 @@
           setResultsMode(true);
 
           //authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
-
+          lastSearchPrompt = prompt;
           renderRows(results);
         } catch (err) {
           console.log(err);
