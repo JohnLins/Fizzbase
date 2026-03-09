@@ -362,7 +362,10 @@ input::placeholder {
 .go[disabled] {
   opacity: 0.65;
   cursor: not-allowed;
+}
+.go[disabled]:hover {
   transform: none;
+  filter: none;
 }
 
 .go-icon {
@@ -378,12 +381,16 @@ input::placeholder {
 }
 .go.is-loading .go-icon--spinner {
   display: inline-flex;
+  isolation: isolate; /* keep spinner animation independent of button transform */
 }
-.spinner-svg {
-  animation: spin 0.6s linear infinite;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.spinner-circle {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: rgba(0, 0, 0, 0.75);
+  border-radius: 50%;
+  /* rotation applied via JS (requestAnimationFrame) so it can't be blocked by parent CSS */
 }
 
 /* Loading reasoning steps below search bar */
@@ -398,6 +405,9 @@ input::placeholder {
   backdrop-filter: blur(8px);
   position: relative;
   overflow: hidden;
+}
+body.results .loading-reasons {
+  width: min(var(--max), 100%);
 }
 .loading-reasons::before {
   content: "";
