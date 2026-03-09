@@ -176,7 +176,7 @@
                 Deep
               </button>
               <span class="reasoning-sep">|</span>
-              <button type="button" class="reasoning-opt" data-level="super">
+              <button type="button" class="reasoning-opt reasoning-opt--disabled" data-level="super" title="Launching soon">
                 <svg class="reasoning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 2l3 7 7 1-5 5 1.5 7.5L12 18l-6.5 3.5L7 15l-5-5 7-1 3-7z"/>
                 </svg>
@@ -296,6 +296,7 @@
       window.reasoningLevel = "deep";
       document.querySelectorAll(".reasoning-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
+          if (btn.classList.contains("reasoning-opt--disabled")) return;
           document.querySelectorAll(".reasoning-opt").forEach((b) => b.classList.remove("reasoning-opt--active"));
           btn.classList.add("reasoning-opt--active");
           window.reasoningLevel = btn.dataset.level;
@@ -1086,7 +1087,7 @@
               },
               body: JSON.stringify({
                 prompt,
-                reasoning_level: window.reasoningLevel || "deep",
+                mode: window.reasoningLevel || "deep",
               }),
             },
           );

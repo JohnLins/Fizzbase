@@ -305,6 +305,15 @@ body.results .search:focus-within textarea {
   font-weight: 550;
   background: rgba(255, 255, 255, 0.08);
 }
+.reasoning-opt.reasoning-opt--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+.reasoning-opt.reasoning-opt--disabled:hover {
+  color: inherit;
+  background: transparent;
+}
 
 .reasoning-sep {
   opacity: 0.4;
