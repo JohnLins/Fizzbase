@@ -141,49 +141,87 @@
       <main class="hero">
         <div class="heroTop" id="heroTop">
           <h1 style="font-size: clamp(1.5rem, 6vw, 4rem); white-space: nowrap">
-            Search Engine for People in SF
+            People Search Engine
           </h1>
           <div class="sub">
-            Fizzbase is an AI search platform that indexed every important
+            Fizzbase is an AI-powered search platform that indexed every important
             person in the Bay Area
           </div>
         </div>
 
         <form class="search" id="searchForm" autocomplete="off">
-          <input
-            id="q"
-            type="text"
-            spellcheck="false"
-            aria-label="Search Fizzbase"
-          />
-          <button class="go" id="goBtn" type="submit">
-            <!-- Thicker search (magnifying glass) icon SVG -->
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                stroke="currentColor"
-                stroke-width="2.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M16.5 16.5 21 21"
-                stroke="currentColor"
-                stroke-width="2.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+          <div class="search-input-wrap">
+            <textarea
+              id="q"
+              rows="3"
+              spellcheck="false"
+              aria-label="Search Fizzbase"
+              placeholder="Describe who you're looking for..."
+            ></textarea>
+          </div>
+          <div class="search-footer">
+            <div class="reasoning-level">
+              <button type="button" class="reasoning-opt" data-level="fast">
+                <svg class="reasoning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+                Fast
+              </button>
+              <span class="reasoning-sep">|</span>
+              <button type="button" class="reasoning-opt reasoning-opt--active" data-level="deep">
+                <svg class="reasoning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1 .34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0-.34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+                </svg>
+                Deep
+              </button>
+              <span class="reasoning-sep">|</span>
+              <button type="button" class="reasoning-opt" data-level="super">
+                <svg class="reasoning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2l3 7 7 1-5 5 1.5 7.5L12 18l-6.5 3.5L7 15l-5-5 7-1 3-7z"/>
+                </svg>
+                Super
+              </button>
+            </div>
+            <button class="go" id="goBtn" type="submit">
+              <span class="go-icon go-icon--search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="go-icon go-icon--spinner" aria-hidden="true">
+                <svg class="spinner-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="24 48" stroke-dashoffset="12"/>
+                </svg>
+              </span>
+            </button>
+          </div>
         </form>
 
         <div class="error" id="errorBox"></div>
+
+        <!-- Loading reasoning animation (shown during search) -->
+        <div class="loading-reasons" id="loadingReasons" aria-live="polite">
+          <div class="loading-reasons-inner">
+            <div class="loading-step" data-step="1">
+              <span class="loading-step-icon"></span>
+              <span>Parsing your query</span>
+            </div>
+            <div class="loading-step" data-step="2">
+              <span class="loading-step-icon"></span>
+              <span>Searching Bay Area graph</span>
+            </div>
+            <div class="loading-step" data-step="3">
+              <span class="loading-step-icon"></span>
+              <span>Mapping connections</span>
+            </div>
+            <div class="loading-step" data-step="4">
+              <span class="loading-step-icon"></span>
+              <span>Ranking profiles</span>
+            </div>
+          </div>
+        </div>
       </main>
 
       <!-- Results -->
@@ -255,6 +293,24 @@
       ];
       const input = document.getElementById("q");
       let i = 0;
+
+      // Reasoning level selector
+      window.reasoningLevel = "deep";
+      document.querySelectorAll(".reasoning-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".reasoning-opt").forEach((b) => b.classList.remove("reasoning-opt--active"));
+          btn.classList.add("reasoning-opt--active");
+          window.reasoningLevel = btn.dataset.level;
+        });
+      });
+
+      // Enter to submit, Shift+Enter for newline (ChatGPT-style)
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          document.getElementById("searchForm").requestSubmit();
+        }
+      });
 
       function setPlaceholder(text) {
         if (document.activeElement === input && input.value) return;
@@ -956,6 +1012,8 @@
           : null;
         const base = summaryEl.textContent.replace(/\s*…\s*$/, "").trim(); // summary without trailing "…"
         const strongEl = document.createElement("strong");
+        strongEl.className = "gradient-text";
+        strongEl.style.fontWeight = "470";
         summaryEl.innerHTML = "";
         summaryEl.appendChild(document.createTextNode(base + " "));
         summaryEl.appendChild(strongEl);
@@ -997,8 +1055,10 @@
       async function runSearch(prompt) {
         clearError();
         goBtn.disabled = true;
-        goBtn.textContent = "Searching…";
+        goBtn.classList.add("is-loading");
         document.getElementById("demo-vid").style.display = "none";
+        const loadingEl = document.getElementById("loadingReasons");
+        loadingEl.classList.add("is-visible");
 
         try {
           const firebase_uid = null; // if you have auth later
@@ -1015,7 +1075,10 @@
                 "Content-Type": "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
               },
-              body: JSON.stringify({ prompt }),
+              body: JSON.stringify({
+                prompt,
+                reasoning_level: window.reasoningLevel || "deep",
+              }),
             },
           );
 
@@ -1052,13 +1115,8 @@
           showError("Network error. Check your backend URL / CORS.");
         } finally {
           goBtn.disabled = false;
-          goBtn.innerHTML = `
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M16.5 16.5 21 21"
-        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
+          goBtn.classList.remove("is-loading");
+          loadingEl.classList.remove("is-visible");
         }
       }
 
