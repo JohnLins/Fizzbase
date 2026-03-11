@@ -453,7 +453,11 @@ body.results .loading-reasons {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.35s ease;
+}
+.loading-step.loading-step--revealed {
+  color: rgba(255, 255, 255, 0.95);
 }
 .loading-step-icon {
   width: 6px;
