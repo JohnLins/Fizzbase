@@ -1006,7 +1006,7 @@
 
       // ====== Explain stream (appends at end of AI summary, explanation in bold) ======
       async function streamExplain(profileId, summaryEl) {
-        const apiBase = "http://localhost:8080";//"https://web-production-79f4.up.railway.app";
+        const apiBase = "https://web-production-79f4.up.railway.app";
         const token = window.auth && window.auth.currentUser
           ? await window.auth.currentUser.getIdToken()
           : null;
@@ -1096,8 +1096,7 @@
             : null;
 
           const res = await fetch(
-            //"https://web-production-79f4.up.railway.app/search",
-            "http://localhost:8080/search",
+            "https://web-production-79f4.up.railway.app/search",
             {
               method: "POST",
               headers: {
