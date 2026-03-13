@@ -281,6 +281,11 @@
     </div>
 
     <script>
+      // API base: use localhost when served from localhost (e.g. source run.sh), else prod (Railway)
+      const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        ? "http://localhost:8080"
+        : "https://web-production-79f4.up.railway.app";
+
       // ====== Placeholder rotation ======
       const examples = [
         "SF-based founders connected to YC who hired product leaders from Apple",
@@ -1067,7 +1072,7 @@
 
       // ====== Explain stream (appends at end of AI summary, explanation in bold) ======
       async function streamExplain(profileId, summaryEl) {
-        const apiBase = "http://localhost:8080"//"https://web-production-79f4.up.railway.app";
+        const apiBase = API_BASE;
         const token = window.auth && window.auth.currentUser
           ? await window.auth.currentUser.getIdToken()
           : null;
@@ -1165,7 +1170,7 @@
           const token = window.auth.currentUser
             ? await window.auth.currentUser.getIdToken()
             : null;
-          const apiBase = "http://localhost:8080"//"https://web-production-79f4.up.railway.app";
+          const apiBase = API_BASE;
 
           if (mode === "super") {
             // Step 1: enqueue super search job
