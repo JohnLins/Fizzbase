@@ -346,6 +346,67 @@
         document.body.classList.toggle("results", !!on);
       }
 
+      // Super-mode logs are now rendered inside the fixed loading box
+      // using the existing 4-step layout, so the box height stays the same.
+      let superLogBuffer = [];
+
+      function resetLoadingStepsToDefault() {
+        const loadingEl = document.getElementById("loadingReasons");
+        const defaultTexts = [
+          "Parsing your query",
+          "Searching people space",
+          "Mapping connections",
+          "Ranking profiles",
+        ];
+        const stepEls = loadingEl.querySelectorAll(".loading-step");
+        stepEls.forEach((el, idx) => {
+          const spans = el.querySelectorAll("span");
+          if (spans[1]) {
+            spans[1].textContent = defaultTexts[idx] || "";
+          }
+        });
+      }
+
+      function updateLoadingLogsFromBuffer() {
+        const loadingEl = document.getElementById("loadingReasons");
+        const stepEls = loadingEl.querySelectorAll(".loading-step");
+        const maxLines = stepEls.length;
+        const logsToShow = superLogBuffer.slice(-maxLines);
+        // Stream logs from top to bottom: earliest at top, latest at bottom.
+        stepEls.forEach((el, idx) => {
+          const spans = el.querySelectorAll("span");
+          if (!spans[1]) return;
+          const text = logsToShow[idx] || "";
+          spans[1].textContent = text || "";
+          // Only show rows that actually have text to avoid empty bullets.
+          el.style.opacity = text ? "1" : "0";
+        });
+      }
+
+      function resetSuperLogs(isSuperMode) {
+        superLogBuffer = [];
+        const loadingEl = document.getElementById("loadingReasons");
+        const stepEls = loadingEl.querySelectorAll(".loading-step");
+        if (isSuperMode) {
+          // Blank out all step texts and hide rows so we don't flash the default copy.
+          stepEls.forEach((el) => {
+            const spans = el.querySelectorAll("span");
+            if (spans[1]) {
+              spans[1].textContent = "";
+            }
+            el.style.opacity = "0";
+          });
+        } else {
+          resetLoadingStepsToDefault();
+        }
+      }
+
+      function appendSuperLogs(newLogs) {
+        if (!Array.isArray(newLogs) || !newLogs.length) return;
+        superLogBuffer.push(...newLogs);
+        updateLoadingLogsFromBuffer();
+      }
+
       // ====== Icons ======
       const ICONS = {
         linkedin: `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1006,7 +1067,7 @@
 
       // ====== Explain stream (appends at end of AI summary, explanation in bold) ======
       async function streamExplain(profileId, summaryEl) {
-        const apiBase = "https://web-production-79f4.up.railway.app";
+        const apiBase = "http://localhost:8080"//"https://web-production-79f4.up.railway.app";
         const token = window.auth && window.auth.currentUser
           ? await window.auth.currentUser.getIdToken()
           : null;
@@ -1054,6 +1115,8 @@
       // ====== Search behavior (UPDATED FOR NEW API FORMAT) ======
       async function runSearch(prompt) {
         clearError();
+        const mode = window.reasoningLevel || "deep";
+        resetSuperLogs(mode === "super");
         goBtn.disabled = true;
         goBtn.classList.add("is-loading");
         document.getElementById("demo-vid").style.display = "none";
@@ -1063,20 +1126,28 @@
         loadingEl.classList.add("is-visible");
 
         let stepInterval;
-        // Reveal loading steps left-to-right; speed depends on mode (fast / deep / super)
-        const stepRevealMs = { fast: 50, deep: 1000, super: 4000 }[window.reasoningLevel || "deep"];
         const stepEls = loadingEl.querySelectorAll(".loading-step");
         stepEls.forEach((el) => el.classList.remove("loading-step--revealed"));
-        let stepIndex = 0;
-        stepEls[0]?.classList.add("loading-step--revealed");
-        stepInterval = setInterval(() => {
-          stepIndex++;
-          if (stepIndex < stepEls.length) {
-            stepEls[stepIndex].classList.add("loading-step--revealed");
-          } else {
-            clearInterval(stepInterval);
-          }
-        }, stepRevealMs);
+
+        if (mode === "super") {
+          // For super mode, we use the loading box as a fixed-height
+          // status stream. Keep all rows visible and fill their text
+          // with job logs as they arrive.
+          stepEls.forEach((el) => el.classList.add("loading-step--revealed"));
+        } else {
+          // Fast / deep: keep original staged animation behavior.
+          const stepRevealMs = { fast: 50, deep: 1000 }[mode] || 1000;
+          let stepIndex = 0;
+          stepEls[0]?.classList.add("loading-step--revealed");
+          stepInterval = setInterval(() => {
+            stepIndex++;
+            if (stepIndex < stepEls.length) {
+              stepEls[stepIndex].classList.add("loading-step--revealed");
+            } else {
+              clearInterval(stepInterval);
+            }
+          }, stepRevealMs);
+        }
 
         // JS-driven spinner (CSS animation can be blocked by parent/stacking)
         const spinnerEl = document.getElementById("goSpinner");
@@ -1094,48 +1165,142 @@
           const token = window.auth.currentUser
             ? await window.auth.currentUser.getIdToken()
             : null;
+          const apiBase = "http://localhost:8080"//"https://web-production-79f4.up.railway.app";
 
-          const res = await fetch(
-            "https://web-production-79f4.up.railway.app/search",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          if (mode === "super") {
+            // Step 1: enqueue super search job
+            const enqueueRes = await fetch(
+              `${apiBase}/search?mode=super`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                  prompt,
+                }),
               },
-              body: JSON.stringify({
-                prompt,
-                mode: window.reasoningLevel || "deep",
-              }),
-            },
-          );
+            );
 
-          const data = await res.json().catch(() => ({}));
+            const enqueueData = await enqueueRes.json().catch(() => ({}));
 
-          if (!res.ok) {
-            const code = data.error || "ERROR";
-            const msg = data.message || "Search failed.";
-            if (code == "anon_search_limit_reached" || code == "sign_in_required") {
-              document.getElementById("signin-modal").style.display = "flex";
-            } else {
-              showError(msg);
+            if (!enqueueRes.ok) {
+              const code = enqueueData.error || "ERROR";
+              const msg = enqueueData.message || "Search failed.";
+              if (code === "anon_search_limit_reached" || code === "sign_in_required") {
+                document.getElementById("signin-modal").style.display = "flex";
+              } else {
+                showError(msg);
+                setResultsMode(true);
+                renderRows([]);
+              }
+              return;
+            }
+
+            const jobId = enqueueData.job_id;
+            if (!jobId) {
+              showError("Super search did not return a job id.");
               setResultsMode(true);
               renderRows([]);
+              return;
             }
-            return;
+
+            appendSuperLogs([`Super search queued`]);
+
+            // Step 2: poll /super for status and result
+            let lastLogCount = 0;
+            let resultPayload = null;
+
+            while (true) {
+              await new Promise((resolve) => setTimeout(resolve, 3000));
+
+              const pollRes = await fetch(
+                `${apiBase}/super?id=${encodeURIComponent(jobId)}`,
+                {
+                  method: "GET",
+                  headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                  },
+                },
+              );
+
+              const pollData = await pollRes.json().catch(() => ({}));
+              if (!pollRes.ok) {
+                const msg = pollData.error || "Error polling super search job.";
+                showError(msg);
+                setResultsMode(true);
+                renderRows([]);
+                return;
+              }
+
+              const logs = Array.isArray(pollData.logs) ? pollData.logs : [];
+              if (logs.length > lastLogCount) {
+                const newLogs = logs.slice(lastLogCount);
+                lastLogCount = logs.length;
+                appendSuperLogs(newLogs);
+              }
+
+              if (pollData.status === "completed") {
+                resultPayload = pollData.result || null;
+                break;
+              }
+
+              if (pollData.status === "failed") {
+                const msg = pollData.error || "Super search job failed.";
+                showError(msg);
+                setResultsMode(true);
+                renderRows([]);
+                return;
+              }
+            }
+
+            const finalData = resultPayload || {};
+            const results = Array.isArray(finalData.results) ? finalData.results : [];
+
+            setResultsMode(true);
+            lastSearchPrompt = prompt;
+            renderRows(results);
+          } else {
+            // Fast / deep inline search
+            const res = await fetch(
+              `${apiBase}/search`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                  prompt,
+                  mode,
+                }),
+              },
+            );
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+              const code = data.error || "ERROR";
+              const msg = data.message || "Search failed.";
+              if (code == "anon_search_limit_reached" || code == "sign_in_required") {
+                document.getElementById("signin-modal").style.display = "flex";
+              } else {
+                showError(msg);
+                setResultsMode(true);
+                renderRows([]);
+              }
+              return;
+            }
+
+            // Response shape:
+            // { count: number, prompt: string, results: [{id, payload, score}, ...] }
+            const results = Array.isArray(data.results) ? data.results : [];
+
+            setResultsMode(true);
+            lastSearchPrompt = prompt;
+            renderRows(results);
           }
-
-          // New response shape:
-          // { count: number, prompt: string, results: [{id, payload, score}, ...] }
-          const results = Array.isArray(data.results) ? data.results : [];
-          const count =
-            typeof data.count === "number" ? data.count : results.length;
-
-          setResultsMode(true);
-
-          //authPillEl.textContent = data.signed_in ? "Signed in" : "Anonymous";
-          lastSearchPrompt = prompt;
-          renderRows(results);
         } catch (err) {
           console.log(err);
           setResultsMode(true);
