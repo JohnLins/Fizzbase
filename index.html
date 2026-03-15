@@ -288,13 +288,13 @@
 
       // ====== Placeholder rotation ======
       const examples = [
-        "SF-based founders connected to YC who hired product leaders from Apple",
-        "Investors connected to climate startups in SF",
-        "Engineers based in SF who worked at Stripe for at least 2 years and studied at Stanford",
-        "Designers with 10+ years of experience who worked at Figma and studied at UCSB",
-        "Founders connected to Sequoia and ex-Google PMs",
-        "New grads based in SF who interned at startups in the valley and graduated after 2025",
-        "Researchers from Berkeley or Stanford who published at NeurIPS and now work at small frontier-model companies",
+        "Find me SF-based founders connected to YC who hired product leaders from Apple",
+        "Find me I'm looking for investors connected to climate startups in SF",
+        "Find me engineers based in SF who worked at Stripe for at least 2 years and studied at Stanford",
+        "Find me designers with 10+ years of experience who worked at Figma and studied at UCSB",
+        "Find me founders connected to Sequoia and ex-Google PMs",
+        "Find me new grads based in SF who interned at startups in the valley and graduated after 2025",
+        "Find me researchers from Berkeley or Stanford who published at NeurIPS and now work at small frontier-model companies",
       ];
       const input = document.getElementById("q");
       let i = 0;
@@ -1195,6 +1195,10 @@
               const msg = enqueueData.message || "Search failed.";
               if (code === "anon_search_limit_reached" || code === "sign_in_required") {
                 document.getElementById("signin-modal").style.display = "flex";
+              } else if (code === "daily_search_limit_reached") {
+                showError("You used all 30 free credits today, come back tomorrow");
+                setResultsMode(true);
+                renderRows([]);
               } else {
                 showError(msg);
                 setResultsMode(true);
@@ -1290,6 +1294,10 @@
               const msg = data.message || "Search failed.";
               if (code == "anon_search_limit_reached" || code == "sign_in_required") {
                 document.getElementById("signin-modal").style.display = "flex";
+              } else if (code === "daily_search_limit_reached") {
+                showError("You used all 30 free credits today, come back tomorrow");
+                setResultsMode(true);
+                renderRows([]);
               } else {
                 showError(msg);
                 setResultsMode(true);
