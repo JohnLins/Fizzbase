@@ -1318,7 +1318,7 @@
           console.log(err);
           setResultsMode(true);
           renderRows([]);
-          showError("Network error. Check your backend URL / CORS.");
+          showError("Network error. Try again.");
         } finally {
           if (typeof stepInterval !== "undefined") clearInterval(stepInterval);
           if (rafId != null) cancelAnimationFrame(rafId);
